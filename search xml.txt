@@ -1,0 +1,85 @@
+campo novedad:  x_studio_many2one_field_IIMpF
+
+x_studio_procesado_factura_3
+
+
+
+seleccionado para reemplazar 
+
+
+x_studio_codigo_de_factura : donde se scanea
+
+
+x_studio_asiento_del_libros_1:  donde se asigna
+
+
+string="codigo de factura" attrs="{&quot;invisible&quot;: [&quot;|&quot;,&quot;|&quot;,[&quot;x_studio_selection_field_RWeaW&quot;,&quot;=&quot;,&quot;Cargues de remision&quot;],[&quot;x_studio_selection_field_RWeaW&quot;,&quot;=&quot;,False],[&quot;x_studio_selection_field_RWeaW&quot;,&quot;=&quot;,&quot;Factura sin cargue&quot;]]}" domain="['|',('id','in',x_studio_asiento_del_libros_1),&quot;&amp;&quot;,[&quot;x_studio_campo_bandera_cargue.x_studio_dsml_facturas_de_cliente&quot;,&quot;ilike&quot;,&quot;&quot;],[&quot;x_studio_dsml_cargue_de_factura.x_studio_selection_field_RI9Dd&quot;,&quot;=&quot;,&quot;Procesado&quot;]] "
+
+
+
+domain="[('id','in',x_studio_asiento_del_libros_1)]"
+
+
+x_studio_dsml_facturas_de_cliente
+
+x_studio_remisiones
+
+
+
+novedades biejo: x_studio_many2one_field_IIMpF
+
+
+
+class xml.
+
+
+class="ml-5 pl-2"
+
+x_studio_many2one_field_IIMpF
+
+
+
+<label for="date_from" string="Period"/>
+                                            <div>
+                                                <field name="date_from" class="oe_inline"/>
+                                                <field name="date_to" class="oe_inline"/>
+                                            </div>
+
+x_studio_factura_de_cientes
+
+
+
+
+
+[["x_studio_many2one_field_TpSno","in",[2,4,5,57]]]
+
+force_save="True
+
+1603
+
+
+options="{&quot;no_open&quot;:true,&quot;no_create&quot;:true
+
+
+if factura:
+	vovedad = True # open en novedadse 
+tuto
+attrs="{'required': [('x_studio_cont','=',0)],'readonly': [('x_studio_cont','!=',0)]}"
+attrs="{'invisible':['|', '|', ('state', '!=', 'posted'), ('is_move_sent', '=', True), ('move_type', 'not in', ('out_invoice', 'out_refund'))]}"
+
+
+x_studio_novedades_3 = attrs="{'readonly':[('x_studio_id_fact', '!=', 'True')]}" attrs="{'required':[('x_studio_id_fact', '=', 'True')]}"
+
+
+<xpath expr="//field[@name='x_name']" position="attributes">
+    <attribute name="attrs">{}</attribute>
+    <attribute name="force_save">True</attribute>
+    <attribute name="required"/>
+    <attribute name="readonly">1</attribute>
+  </xpath>
+
+
+
+
+
+attrs="{'invisible':['|','|',('x_studio_selection_field_RWeaW','=','Cargues de remision','x_studio_selection_field_RWeaW','=',False,'x_studio_selection_field_RWeaW','=','Factura sin cargue')]}"

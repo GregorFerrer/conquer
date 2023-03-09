@@ -1,0 +1,1112 @@
+<label for="x_studio_dsml_facturas_de_cliente" string="Facturas"/>
+        <field name="x_studio_dsml_facturas_de_cliente" attrs="{&quot;readonly&quot;: [[&quot;x_studio_selection_field_RI9Dd&quot;,&quot;=&quot;,&quot;Procesado&quot;]]}">
+          <form string="Account Entry" js_class="account_invoice_extract_preview">
+            <header>
+              <!-- Post -->
+              <button name="action_post" string="Post" class="oe_highlight" type="object" groups="account.group_account_invoice" attrs="{'invisible': ['|', '|', ('state', '!=', 'draft'), ('auto_post', '=', True), ('move_type', '!=', 'entry')]}"/>
+              <button name="action_post" string="Confirm" class="oe_highlight" type="object" groups="account.group_account_invoice" attrs="{'invisible': ['|', '|', ('state', '!=', 'draft'), ('auto_post', '=', True), ('move_type', '=', 'entry')]}"/>
+              <!-- Send (only invoices) -->
+              <button name="action_invoice_sent" type="object" string="Send &amp; Print" attrs="{'invisible':['|', '|', ('state', '!=', 'posted'), ('is_move_sent', '=', True), ('move_type', 'not in', ('out_invoice', 'out_refund'))]}" class="oe_highlight"/>
+              <button name="action_invoice_sent" type="object" string="Send &amp; Print" attrs="{'invisible':['|', '|', ('state', '!=', 'posted'), ('is_move_sent', '=', False), ('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund'))]}"/>
+              <!-- Register Payment (only invoices / receipts) -->
+              <button name="action_register_payment" id="account_invoice_payment_btn" type="object" class="oe_highlight" attrs="{'invisible': ['|', '|', '|', ('state', '!=', 'posted'), ('payment_state', 'not in', ('partial', 'not_paid')), ('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt')), ('authorized_transaction_ids', '!=', [])]}" context="{'dont_redirect_to_payments': True}" string="Register Payment" groups="account.group_account_invoice"/>
+              <field name="authorized_transaction_ids" invisible="1"/>
+              <button name="payment_action_capture" type="object" string="Capture Transaction" class="oe_highlight" attrs="{'invisible': ['|', '|', ('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')), ('state', '!=', 'posted'), ('authorized_transaction_ids', '=', [])]}"/>
+              <button name="payment_action_void" type="object" string="Void Transaction" confirm="Are you sure you want to void the authorized transaction? This action can't be undone." attrs="{'invisible': ['|', '|', ('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')), ('state', '!=', 'posted'), ('authorized_transaction_ids', '=', [])]}"/>
+              <!-- Preview (only customer invoices) -->
+              <button name="preview_invoice" type="object" string="Preview" attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund'))]}"/>
+              <!-- Reverse -->
+              <button name="184" string="Reverse Entry" type="action" groups="account.group_account_invoice" attrs="{'invisible': ['|', ('move_type', '!=', 'entry'), '|', ('state', '!=', 'posted'), ('payment_state', '=', 'reversed')]}"/>
+              <button name="action_reverse" string="Add Credit Note" type="object" groups="account.group_account_invoice" attrs="{'invisible': ['|', ('move_type', 'not in', ('out_invoice', 'in_invoice')), ('state', '!=', 'posted')]}"/>
+              <field name="debit_origin_id" invisible="1"/>
+              <button name="253" string="Add Debit Note" type="action" groups="account.group_account_invoice" attrs="{'invisible': ['|','|','|','|',('tipo_resolucion_diario_f', '=', 'facturacion-electronica'),('tipo_resolucion_diario_n', '=', 'facturacion-electronica'),('move_type', 'not in', ('out_invoice', 'in_invoice', 'out_refund', 'in_refund')),('debit_origin_id', '!=', False), ('state', '!=', 'posted')]}"/>
+              <!-- Cancel -->
+              <button name="button_cancel" string="Cancel Entry" type="object" groups="account.group_account_invoice" attrs="{'invisible' : ['|', ('id', '=', False), ('state', '!=', 'draft')]}"/>
+              <field name="edi_show_cancel_button" invisible="1"/>
+              <button name="button_cancel_posted_moves" string="Request EDI Cancellation" type="object" groups="account.group_account_invoice" attrs="{'invisible' : [('edi_show_cancel_button', '=', False)]}"/>
+              <field name="estado_dian" attrs="{'invisible': True}"/>
+              <button name="action_generar_nota_debito" type="object" groups="account.group_account_invoice" string="Agregar Nota Débito" attrs="{'invisible': ['|','|','|',('es_nota_debito', '=', True),('state', 'not in', ['open','in_payment','paid','posted']),('fe_habilitada_compania','!=',True),('tipo_resolucion_diario_f', '!=', 'facturacion-electronica'),('tipo_resolucion_diario_n', '!=', 'facturacion-electronica')]}"/>
+              <button name="action_regenerar_xml" type="object" string="Regenerar factura electrónica" groups="account.group_account_invoice" attrs="{'invisible':['|','|',('estado_dian','in', ['Procesado Correctamente.','']),('move_type', 'not in', ('out_invoice', 'in_invoice', 'out_refund', 'in_refund')),('fe_habilitada_compania', '!=', True),('state','=','posted')]}"/>
+              <button name="button_draft" string="Reset to Draft" type="object" groups="account.group_account_invoice" attrs="{'invisible' : [('show_reset_to_draft_button', '=', False)]}"/>
+              <field name="landed_costs_visible" invisible="1" studio-view-group-ids="43"/>
+              <button name="button_create_landed_costs" class="oe_highlight" string="Create Landed Costs" type="object" groups="account.group_account_invoice" attrs="{'invisible': [('landed_costs_visible', '!=', True)]}" studio-view-group-ids="43"/>
+              <field name="state" widget="statusbar" statusbar_visible="draft,posted"/>
+              <button name="retry_ocr" class="oe_highlight" string="Send For Digitalization" type="object" attrs="{'invisible': [('extract_can_show_send_button', '=', False)]}"/>
+            </header>
+            <field name="tax_closing_end_date" invisible="1"/>
+            <div class="alert alert-info text-center" attrs="{'invisible': ['|', ('tax_closing_end_date', '==', False),  ('state', '!=', 'draft')]}" role="alert" name="studio_div_0aae37">
+                    Proposition of tax closing journal entry.
+                    <button class="btn btn-link" string="-&gt; Refresh" name="refresh_tax_entry" type="object" groups="account.group_account_invoice" style="padding: 0; vertical-align=baseline;"/>
+            </div>
+            <field name="tax_report_control_error" invisible="1"/>
+            <div class="alert alert-warning text-center" attrs="{'invisible': ['|', ('tax_closing_end_date', '==', False),  ('tax_report_control_error', '!=', True)]}" role="alert" name="studio_div_6177ee">
+                    Some controls failed
+                </div>
+            <field name="extract_state" attrs="{'invisible':True}"/>
+            <field name="extract_word_ids" attrs="{'invisible':True}"/>
+            <field name="extract_can_show_resend_button" attrs="{'invisible':True}"/>
+            <field name="extract_can_show_send_button" attrs="{'invisible':True}"/>
+            <div role="status" class="o_success_ocr" attrs="{'invisible':['|', '|',                             ('move_type', 'not in', ('in_invoice', 'in_refund')),                             ('state', 'not in', ['draft']),                             ('extract_state', 'not in', ['waiting_validation', 'validation_to_send'])]}" name="studio_div_9ac6ba">
+              <!-- Extraction processed with success. Don't forget to validate the different fields. -->
+            </div>
+            <div role="status" class="alert alert-danger mb8" attrs="{'invisible':['|', '|',                             ('move_type', 'not in', ('in_invoice', 'in_refund')),                             ('state', 'not in', ['draft']),                             ('extract_state', 'not in', ['not_enough_credit'])]}" name="studio_div_c71be3">
+              <button string="Buy credits" type="object" name="buy_credits" class="btn btn-sm btn-primary pull-right mb0"/>
+              <button name="retry_ocr" class="btn btn-sm btn-primary pull-right mb0 mr-1" string="Resend For Digitalization" type="object" attrs="{'invisible': [('extract_can_show_resend_button', '=', False)]}"/>
+                    You don't have enough credit to extract data from your invoice.
+                    <div class="clearfix" name="studio_div_08930d"/>
+            </div>
+            <div role="status" class="alert alert-info mb8" name="waiting_extraction" attrs="{'invisible':['|', '|',                             ('move_type', 'not in', ('in_invoice', 'in_refund')),                             ('state', 'not in', ['draft']),                             ('extract_state', 'not in', ['waiting_extraction'])]}">
+              <button string="Refresh" type="object" name="check_status" class="btn btn-sm btn-primary pull-right mb0"/>
+                    All fields will be automated by Artificial Intelligence, it might take 5 seconds.
+                    <div class="clearfix" name="studio_div_1a1584"/>
+            </div>
+            <field name="extract_status_code" invisible="1" options="{'format': false}"/>
+            <div role="status" class="alert alert-info mb8" name="extraction_status" attrs="{'invisible':['|', '|',                             ('move_type', 'not in', ('in_invoice', 'in_refund')),                             ('state', 'not in', ['draft']),                             ('extract_state', 'not in', ['extract_not_ready'])]}">
+              <button string="Refresh" type="object" name="check_status" class="btn btn-sm btn-primary pull-right mb0"/>
+                    The data extraction is not finished yet. The extraction usually takes between 5 and 60 seconds.
+                    <div class="clearfix" name="studio_div_dab4aa"/>
+            </div>
+            <div role="status" class="alert alert-danger mb8" attrs="{'invisible':['|', '|', '|',                             ('move_type', 'not in', ('in_invoice', 'in_refund')),                             ('state', 'not in', ['draft']),                             ('extract_state', 'not in', ['error_status']),                             ('extract_status_code', '&gt;', 99)]}" name="studio_div_64b5b7">
+              <button name="retry_ocr" class="btn btn-sm btn-primary pull-right mb0 mr-1" string="Resend For Digitalization" type="object"/>
+              <field name="extract_error_message" class="oe_inline"/>
+              <div class="clearfix" name="studio_div_a38624"/>
+            </div>
+            <div role="status" class="alert alert-warning mb8" attrs="{'invisible':['|', '|', '|',                             ('move_type', 'not in', ('in_invoice', 'in_refund')),                             ('state', 'not in', ['draft']),                             ('extract_state', 'not in', ['error_status', 'waiting_validation']),                             ('extract_status_code', '&lt;', 100)]}" name="studio_div_12619d">
+              <field name="extract_error_message"/>
+            </div>
+            <div class="alert alert-info" role="alert" style="margin-bottom:0px;" attrs="{'invisible': ['|', ('edi_web_services_to_process', 'in', ['', False]), ('state', '=', 'draft')]}" name="studio_div_cccead">
+              <div name="studio_div_896727">The invoice will be sent asynchronously to :
+                            <field name="edi_web_services_to_process" class="oe_inline"/>
+              </div>
+              <button name="action_process_edi_web_services" type="object" class="oe_link" string="Send now"/>
+            </div>
+            <div class="alert alert-warning" role="alert" style="margin-bottom:0px;" attrs="{'invisible': [('edi_error_count', '=', 0)]}" name="studio_div_1de72a">
+              <field name="edi_error_count"/>
+                         Electronic invoicing error(s)
+                         <button name="254" type="action" class="oe_link oe_inline" string="⇒ See errors"/>
+            </div>
+            <!-- Invoice outstanding credits -->
+            <div groups="account.group_account_invoice,account.group_account_readonly" class="alert alert-warning" role="alert" style="margin-bottom:0px;" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('tax_lock_date_message', '=', False)]}" name="studio_div_926ca0">
+              <field name="tax_lock_date_message" nolabel="1"/>
+            </div>
+            <div groups="account.group_account_invoice,account.group_account_readonly" class="alert alert-info" role="alert" style="margin-bottom:0px;" attrs="{'invisible': ['|', '|', ('move_type', 'not in', ('out_invoice', 'out_refund')), ('invoice_has_outstanding', '=', False), ('payment_state', 'not in', ('not_paid', 'partial'))]}" name="studio_div_654707">
+                        You have <bold>
+                <a class="alert-link" href="#outstanding" role="button">outstanding payments</a>
+              </bold> for this customer. You can allocate them to mark this invoice as paid.
+                    </div>
+            <div groups="account.group_account_invoice,account.group_account_readonly" class="alert alert-info" role="alert" style="margin-bottom:0px;" attrs="{'invisible': ['|', '|', ('move_type', 'not in', ('in_invoice', 'in_refund')), ('invoice_has_outstanding', '=', False), ('payment_state', 'not in', ('not_paid', 'partial'))]}" name="studio_div_424c70">
+                        You have <bold>
+                <a class="alert-link" href="#outstanding" role="button">outstanding debits</a>
+              </bold> for this vendor. You can allocate them to mark this bill as paid.
+                    </div>
+            <div class="alert alert-info" role="alert" style="margin-bottom:0px;" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('auto_post', '=', False)]}" name="studio_div_e043c9">
+                        This move is configured to be posted automatically at the accounting date: <field name="date" readonly="1"/>.
+                    </div>
+            <!-- Invoice suspense accounts -->
+            <div groups="account.group_account_invoice,account.group_account_readonly" class="alert alert-info" role="alert" style="margin-bottom:0px;" attrs="{'invisible': ['|', ('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt')), ('invoice_has_matching_suspense_amount','=',False)]}" name="studio_div_c1ed51">
+                    You have suspense account moves that match this invoice. <bold>
+                <button class="alert-link" type="object" name="action_open_matching_suspense_moves" role="button" string="Check them" style="padding: 0;vertical-align: baseline;"/>
+              </bold> to mark this invoice as paid.
+                </div>
+            <sheet name="studio_sheet_97c9d5">
+              <div name="button_box" class="oe_button_box">
+                <button name="action_open_tax_report" class="oe_stat_button" icon="fa-book" type="object" string="Tax Report" attrs="{'invisible': [('tax_closing_end_date', '==', False)]}">
+                </button>
+                <button name="open_reconcile_view" class="oe_stat_button" icon="fa-bars" type="object" attrs="{'invisible': ['|', '|', ('move_type', '!=', 'entry'), ('id', '=', False), ('has_reconciled_entries', '=', False)]}" string="Reconciled Entries" groups="account.group_account_manager" studio_approval="False">
+                            </button>
+                <button type="object" class="oe_stat_button" name="action_view_debit_notes" icon="fa-plus" attrs="{'invisible': [('debit_note_count', '=', 0)]}">
+                  <div class="o_field_widget o_stat_info" name="studio_div_0b6cc0">
+                    <span class="o_stat_value">
+                      <field name="debit_note_count"/>
+                    </span>
+                    <span class="o_stat_text">Debit Notes</span>
+                  </div>
+                </button>
+                <field name="asset_id" invisible="1"/>
+                <field name="asset_asset_type" invisible="1"/>
+                <field name="asset_ids_display_name" invisible="1"/>
+                <field name="number_asset_ids" invisible="1"/>
+                <field name="draft_asset_ids" invisible="1"/>
+                <button name="open_asset_view" attrs="{'invisible': ['|', ('asset_id', '=', False), ('asset_asset_type', '=', 'sale')]}" class="oe_stat_button" icon="fa-cube" type="object">
+                  <field name="asset_id_display_name" nolabel="1"/>
+                </button>
+                <button name="action_open_asset_ids" type="object" class="oe_stat_button" icon="fa-id-card-o" attrs="{'invisible': ['|', ('number_asset_ids', '=', 0), ('draft_asset_ids', '=', True)]}">
+                  <field name="asset_ids_display_name" nolabel="1"/>
+                </button>
+                <button name="action_open_asset_ids" type="object" class="oe_stat_button text-danger" icon="fa-id-card-o" attrs="{'invisible': ['|', ('number_asset_ids', '=', 0), ('draft_asset_ids', '=', False)]}">
+                  <field name="asset_ids_display_name" nolabel="1"/>
+                </button>
+                <field name="landed_costs_ids" invisible="1" studio-view-group-ids="43"/>
+                <button string="Landed Costs" type="object" name="action_view_landed_costs" class="oe_stat_button" icon="fa-plus-square" groups="stock.group_stock_manager" attrs="{'invisible': [('landed_costs_ids', '=', [])]}" studio-view-group-ids="43"/>
+              </div>
+              <!-- Payment status for invoices / receipts -->
+              <widget name="web_ribbon" title="Paid" attrs="{'invisible': ['|', ('payment_state', '!=', 'paid'), ('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'))]}"/>
+              <widget name="web_ribbon" title="In Payment" attrs="{'invisible': ['|', ('payment_state', '!=', 'in_payment'), ('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'))]}"/>
+              <widget name="web_ribbon" title="Partial" attrs="{'invisible': ['|', ('payment_state', '!=', 'partial'), ('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'))]}"/>
+              <widget name="web_ribbon" title="Reversed" bg_color="bg-danger" attrs="{'invisible': [('payment_state', '!=', 'reversed')]}"/>
+              <widget name="web_ribbon" text="Invoicing App Legacy" bg_color="bg-info" attrs="{'invisible': [('payment_state', '!=', 'invoicing_legacy')]}" tooltip="This entry has been generated through the Invoicing app, before installing Accounting. It has been disabled by the 'Invoicing Switch Threshold Date' setting so that it does not impact your accounting."/>
+              <!-- Invisible fields -->
+              <field name="id" invisible="1"/>
+              <field name="show_name_warning" invisible="1"/>
+              <field name="posted_before" invisible="1"/>
+              <field name="move_type" invisible="1"/>
+              <field name="payment_state" invisible="1" force_save="1"/>
+              <field name="invoice_filter_type_domain" invisible="1"/>
+              <field name="suitable_journal_ids" invisible="1"/>
+              <field name="company_currency_id" invisible="1"/>
+              <field name="commercial_partner_id" invisible="1"/>
+              <field name="bank_partner_id" invisible="1"/>
+              <field name="display_qr_code" invisible="1"/>
+              <field name="show_reset_to_draft_button" invisible="1"/>
+              <field name="invoice_has_outstanding" invisible="1"/>
+              <field name="is_move_sent" invisible="1"/>
+              <field name="invoice_has_matching_suspense_amount" invisible="1"/>
+              <field name="has_reconciled_entries" invisible="1"/>
+              <field name="restrict_mode_hash_table" invisible="1"/>
+              <field name="country_code" invisible="1"/>
+              <div class="oe_title" name="studio_div_3bc509">
+                <!-- Invoice draft header -->
+                <span class="o_form_label">
+                  <field name="move_type" attrs="{'invisible': [('move_type', '=', 'entry')]}" readonly="1" nolabel="1"/>
+                </span>
+                <h1>
+                                
+                            </h1>
+                <!-- Number -->
+                <span class="text-warning" attrs="{'invisible': [('show_name_warning', '=', False)]}">The current highest number is <field name="highest_name"/>. You might want to put a higher number here.</span>
+                <h1 class="mt0" attrs="{'invisible':[('name', '=', '/'), ('posted_before', '=', False)]}">
+                  <field name="name" attrs="{}" placeholder="JRNL/2016/00001"/>
+                </h1>
+              </div>
+              <group name="studio_group_d8f681">
+                <group id="header_left_group" name="studio_group_9d12d1">
+                  <div class="o_td_label" name="studio_div_c27947">
+                    <label for="partner_id" string="Customer" style="font-weight:bold;" attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund', 'out_receipt'))]}"/>
+                    <label for="partner_id" string="Vendor" style="font-weight:bold;" attrs="{'invisible': [('move_type', 'not in', ('in_invoice', 'in_refund', 'in_receipt'))]}"/>
+                  </div>
+                  <field name="partner_id" widget="res_partner_many2one" nolabel="1" context="{                                             'res_partner_search_mode': (context.get('default_move_type', 'entry') in ('out_invoice', 'out_refund', 'out_receipt') and 'customer') or (context.get('default_move_type', 'entry') in ('in_invoice', 'in_refund', 'in_receipt') and 'supplier') or False,                                             'show_address': 1, 'default_is_company': True, 'show_vat': True}" options="{&quot;always_reload&quot;: True, &quot;no_quick_create&quot;: True}" attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'))]}"/>
+                  <field name="x_studio_related_field_6PviN"/>
+                  <field name="x_studio_asiento_del_libro_puente" string="Asiento del Libro puente"/>
+                  <field name="x_studio_liq_final" string="Liq Final¨(_"/>
+                  <field name="payment_reference" attrs="{&quot;invisible&quot;: [[&quot;move_type&quot;,&quot;not in&quot;,[&quot;out_invoice&quot;,&quot;out_refund&quot;,&quot;in_invoice&quot;,&quot;in_refund&quot;,&quot;out_receipt&quot;,&quot;in_receipt&quot;]]]}"/>
+                  <field name="customer_invoice_type" attrs="{'invisible': [('move_type', '!=', 'out_refund'),('move_type', '!=', 'out_invoice')]}"/>
+                  <field name="mandate_id" attrs="{'invisible': [('move_type', '!=', 'out_refund'),('move_type', '!=', 'out_invoice')],'required':[('invoice_mandate_contract', '=', True)]}"/>
+                  <field name="invoice_trade_sample" attrs="{}" invisible="1"/>
+                  <field name="trade_sample_price" attrs="{'invisible': [('invoice_trade_sample', '!=', True)], 'required': [('invoice_trade_sample', '=', True)]}"/>
+                  <field name="partner_shipping_id" groups="sale.group_delivery_invoice_address" attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund'))]}"/>
+                  <field name="x_studio_codigo_de_barras_1" string="codigo de barras" attrs="{}" invisible="1"/>
+                  <field name="sequence_prefix"/>
+                  <field name="x_studio_consectivo_z" string="consectivo Z" attrs="{}" invisible="1"/>
+                  <field name="x_studio_alistado_fact" attrs="{}" invisible="1"/>
+                  <field name="x_studio_en_cargue_f" string="En cargue F" attrs="{}" invisible="1"/>
+                  <field name="x_studio_cantidad_factura" string="cantidad factura" attrs="{}" invisible="1"/>
+                  <field name="x_codigo_fac" attrs="{}" invisible="1"/>
+                  <field name="x_studio_peso_5" force_save="True" attrs="{}" readonly="1" invisible="1"/>
+                  <label for="ref" string="Bill Reference" attrs="{'invisible':[('move_type', 'not in', ('in_invoice', 'in_receipt', 'in_refund'))]}"/>
+                  <field name="ref" nolabel="1" attrs="{'invisible':[('move_type', 'not in', ('in_invoice', 'in_receipt', 'in_refund'))]}"/>
+                  <!-- Nota debito otro sistema -->
+                  <field name="credit_note_without_reference" attrs="{'invisible': ['|',('move_type', '!=', 'out_refund'),('reversed_entry_id','!=',False)]}"/>
+                  <field name="numero_factura_origen" attrs="{'invisible': ['|',('move_type', '!=', 'out_refund'),('reversed_entry_id','!=',False)],'required': [('move_type', '=', 'out_refund'),('reversed_entry_id','=',False),('credit_note_without_reference','!=',True)]}"/>
+                  <field name="cufe_factura_origen" attrs="{'invisible': ['|',('move_type', '!=', 'out_refund'),('reversed_entry_id','!=',False)],'required': [('move_type', '=', 'out_refund'),('reversed_entry_id','=',False),('credit_note_without_reference','!=',True)]}"/>
+                  <field name="fecha_factura_origen" attrs="{'invisible': ['|',('move_type', '!=', 'out_refund'),('reversed_entry_id','!=',False)],'required': [('move_type', '=', 'out_refund'),('reversed_entry_id','=',False),('credit_note_without_reference','!=',True)]}"/>
+                  <!--AIU-->
+                  <field name="usa_aiu" attrs="{}" invisible="1"/>
+                  <field name="objeto_contrato" attrs="{'invisible': [('usa_aiu', '!=', True)],'required': [('usa_aiu', '=', True)]}"/>
+                  <field name="pct_administracion" attrs="{'invisible': [('usa_aiu', '!=', True)],'required': [('usa_aiu', '=', True)]}"/>
+                  <field name="pct_imprevistos" attrs="{'invisible': [('usa_aiu', '!=', True)],'required': [('usa_aiu', '=', True)]}"/>
+                  <field name="pct_utilidad" attrs="{'invisible': [('usa_aiu', '!=', True)],'required': [('usa_aiu', '=', True)]}"/>
+                  <field name="supplier_invoice_cufe" attrs="{'invisible': ['|',('move_type', '=', 'out_refund'),('move_type', '=', 'out_invoice')]}"/>
+                  <field name="supplier_invoice_type" attrs="{'invisible': ['|',('move_type', '=', 'out_refund'),('move_type', '=', 'out_invoice')]}"/>
+                  <field name="supplier_claim_concept" attrs="{'invisible': ['|',('move_type', '=', 'out_refund'),('move_type', '=', 'out_invoice')]}"/>
+                  <field name="ref" attrs="{'invisible':[('move_type', 'in', ('in_invoice', 'in_receipt', 'in_refund', 'out_invoice', 'out_refund'))]}"/>
+                  <field name="x_studio_order" string="ORDER" attrs="{}" invisible="1"/>
+                  <field name="partner_bank_id" context="{'default_partner_id': bank_partner_id}" domain="[('partner_id', '=', bank_partner_id)]" attrs="{'invisible': [('move_type', 'not in', ('in_invoice', 'in_refund', 'in_receipt'))], 'readonly': [('state', '!=', 'draft')]}"/>
+                  <label name="invoice_vendor_bill_id_label" for="invoice_vendor_bill_id" string="Auto-Complete" class="oe_edit_only" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('move_type', '!=', 'in_invoice')]}" invisible="1"/>
+                  <field name="invoice_vendor_bill_id" nolabel="1" class="oe_edit_only" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('move_type', '!=', 'in_invoice')]}" domain="[('company_id', '=', company_id), ('partner_id','child_of', [partner_id]), ('move_type','=','in_invoice')]" placeholder="Select an old vendor bill" options="{'no_create': True}" context="{'show_total_amount': True}" invisible="1"/>
+                  <field name="purchase_id" invisible="1" studio-view-group-ids="55"/>
+                  <label for="purchase_vendor_bill_id" string="Auto-Complete" class="oe_edit_only" attrs="{'invisible': ['|', ('state','!=','draft'), ('move_type', '!=', 'in_invoice')]}" studio-view-group-ids="55"/>
+                  <field name="purchase_vendor_bill_id" nolabel="1" attrs="{'invisible': ['|', ('state','!=','draft'), ('move_type', '!=', 'in_invoice')]}" class="oe_edit_only" domain="partner_id and [('company_id', '=', company_id), ('partner_id','child_of', [partner_id])] or [('company_id', '=', company_id)]" placeholder="Select a purchase order or an old bill" context="{'show_total_amount': True}" options="{'no_create': True, 'no_open': True}" studio-view-group-ids="55"/>
+                </group>
+                <group id="header_right_group" name="studio_group_7c0a22">
+                  <!-- Invoice date (only invoices / receipts) -->
+                  <div class="o_td_label" name="studio_div_aff148">
+                    <label for="invoice_date" string="Invoice Date" style="font-weight:bold;" attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund', 'out_receipt'))]}"/>
+                    <label for="invoice_date" string="Bill Date" style="font-weight:bold;" attrs="{'invisible': [('move_type', 'not in', ('in_invoice', 'in_refund', 'in_receipt'))]}"/>
+                  </div>
+                  <field name="invoice_date" nolabel="1" options="{'datepicker': {'warn_future': true}}" attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'))]}"/>
+                  <field name="invoice_mandate_contract" attrs="{'invisible': [('move_type', '!=', 'out_refund'),('move_type', '!=', 'out_invoice')]}"/>
+                  <field name="x_studio_many2one_field_z6Mio" string="Novedad del recibo" attrs="{}" invisible="1"/>
+                  <field name="x_studio_novedades_del_documento_f" attrs="{}" invisible="1"/>
+                  <field name="x_studio_char_field_XieDV" string="Observacion" attrs="{}" invisible="1"/>
+                  <field name="date" string="Accounting Date" attrs="{                                             'invisible': [('move_type', 'in', ('out_invoice', 'out_refund', 'out_receipt'))],                                             'readonly': [('state', '!=', 'draft')],                                        }"/>
+                  <!-- Invoice payment terms (only invoices) + due date (only invoices / receipts) -->
+                  <label for="invoice_payment_term_id" string="Due Date" attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'))]}"/>
+                  <div class="d-flex" attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'))]}" name="studio_div_e9600a">
+                    <field name="invoice_date_due" force_save="1" placeholder="Date" attrs="{'invisible': [('invoice_payment_term_id', '!=', False)]}"/>
+                    <span class="o_form_label mx-3 oe_edit_only" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('invoice_payment_term_id', '!=', False)]}"> or </span>
+                    <field name="invoice_payment_term_id" placeholder="Terms" attrs="{'required': ['|',('tipo_resolucion_diario_f', '=', 'facturacion-electronica'),('tipo_resolucion_diario_n', '=', 'facturacion-electronica'),('move_type', '!=', 'out_refund'),('fe_habilitar_facturacion_related','=',True),('fe_habilitada_compania', '=', True)]}"/>
+                  </div>
+                  <label for="journal_id" groups="account.group_account_readonly" invisible="context.get('default_journal_id') and context.get('move_type', 'entry') != 'entry'"/>
+                  <div name="journal_div" class="d-flex" invisible="context.get('default_journal_id') and context.get('move_type', 'entry') != 'entry'">
+                    <field name="journal_id" groups="account.group_account_readonly" options="{'no_create': True}" attrs="{'readonly': [('posted_before', '=', True)]}"/>
+                    <span class="oe_inline o_form_label mx-3 oe_read_only" groups="base.group_multi_currency"> in </span>
+                    <!-- Bigger margin on the left because in edit mode the external link button covers the text -->
+                    <span class="oe_inline o_form_label mr-3 ml-5 oe_edit_only" groups="base.group_multi_currency"> in </span>
+                    <field name="currency_id" groups="base.group_multi_currency" attrs="{'readonly': [('posted_before', '=', True)]}"/>
+                  </div>
+                  <field name="edi_document_ids" invisible="1"/>
+                  <field name="edi_state" attrs="{'invisible': ['|', ('edi_state', '=', False), ('state', '=', 'draft')]}"/>
+                  <field name="fecha_entrega" attrs="{'required': ['|',('tipo_resolucion_diario_f', '=', 'facturacion-electronica'),('tipo_resolucion_diario_n', '=', 'facturacion-electronica'),('fe_habilitar_facturacion_related','=',True),('fe_habilitada_compania', '=', True)],'invisible': ['|',('move_type', '!=', 'out_refund'),('move_type', '!=', 'out_invoice'),('fe_habilitada_compania', '!=', True)]}"/>
+                  <field name="fe_habilitar_facturacion_related" invisible="1"/>
+                  <field name="tipo_resolucion_diario_f" invisible="1"/>
+                  <field name="tipo_resolucion_diario_n" invisible="1"/>
+                  <field name="company_id" invisible="1"/>
+                  <field name="tipo_resolucion" invisible="1"/>
+                  <field name="fe_habilitada_compania" invisible="1"/>
+                  <field name="forma_de_pago" attrs="{'required': ['|',('tipo_resolucion_diario_f', '=', 'facturacion-electronica'),('tipo_resolucion_diario_n', '=', 'facturacion-electronica'),('fe_habilitar_facturacion_related','=',True),('fe_habilitada_compania', '=', True)],'invisible': [('fe_habilitada_compania', '!=', True)]}"/>
+                  <field name="payment_mean_id" attrs="{'required': ['|',('tipo_resolucion_diario_f', '=', 'facturacion-electronica'),('tipo_resolucion_diario_n', '=', 'facturacion-electronica'),('fe_habilitar_facturacion_related','=',True),('fe_habilitada_compania', '=', True)],'invisible': [('fe_habilitada_compania', '!=', True)]}"/>
+                  <field name="concepto_correccion_debito" attrs="{'invisible': ['|',('fe_habilitada_compania', '!=', True),('es_nota_debito', '=', False)],                                        'required': [('es_nota_debito', '=', True),('fe_habilitada_compania', '=', True)]}"/>
+                  <field name="es_factura_exportacion" attrs="{'readonly': [('fe_habilitada_compania', '=', True),('state', 'in', ('open','in_payment','paid','posted'))],                                        'invisible': [('fe_habilitada_compania', '!=', True)]}"/>
+                  <field name="enable_invoice_discount" attrs="{'invisible': [('fe_habilitada_compania', '!=', True)]}"/>
+                  <field name="invoice_discount" attrs="{'invisible': ['|',('enable_invoice_discount', '!=', 'value'),('fe_habilitada_compania', '!=', True)], 'required': [('enable_invoice_discount', '=', 'value')]}"/>
+                  <field name="invoice_discount_base" attrs="{'invisible': ['|',('enable_invoice_discount', '!=', ('percent')),('fe_habilitada_compania', '!=', True)]}"/>
+                  <field name="invoice_discount_percent" attrs="{'invisible': ['|',('enable_invoice_discount', '!=', 'percent'),('fe_habilitada_compania', '!=', True)], 'required': [('enable_invoice_discount', '=', 'percent')]}"/>
+                  <field name="invoice_discount_text" attrs="{'invisible': ['|',('enable_invoice_discount', 'not in', ('value','percent')),('fe_habilitada_compania', '!=', True)], 'required': [('enable_invoice_discount', 'in', ('value','percent'))]}"/>
+                  <field name="invoice_charges_freight_text" attrs="{}" invisible="1"/>
+                  <field name="es_nota_debito" attrs="{'readonly': [('fe_habilitada_compania', '=', True)],                                        'invisible': [('es_nota_debito', '!=', True)]}"/>
+                  <field name="concepto_correccion_credito" attrs="{'invisible': ['|',('move_type', '!=', 'out_refund'),('fe_habilitada_compania', '!=', True)],                                        'required': [('move_type', '=', 'out_refund'),('fe_habilitada_compania', '=', True)]}"/>
+                  <field name="move_type" invisible="1"/>
+                  <field name="x_studio_combo_fac" string="Combo FAC" attrs="{}" invisible="1"/>
+                </group>
+              </group>
+              <group name="studio_group_10vn8">
+                <field name="x_studio_obs_liq" string="OBS  LIQ" attrs="{}" invisible="1">
+                  <tree string="descomposicion combo">
+                    <field name="x_actividad" attrs="{}" invisible="1"/>
+                    <field name="x_producto"/>
+                    <field name="x_studio_tipo"/>
+                    <field name="x_studio_cuenta_analitica"/>
+                    <field name="x_name" attrs="{}" invisible="1"/>
+                  </tree>
+                </field>
+                <field name="x_studio_borrar_asiento" string="Borrar asiento"/>
+                <field name="x_studio_related_field_FqJVf" string="234" attrs="{}" invisible="1">
+                  <tree string="Sales Order Lines" create="false">
+                    <field name="order_id"/>
+                    <field name="order_partner_id"/>
+                    <field name="name"/>
+                    <field name="salesman_id"/>
+                    <field name="product_uom_qty" string="Qty"/>
+                    <field name="x_studio_suma_de_impuesto_costo"/>
+                    <field name="qty_delivered"/>
+                    <field name="qty_invoiced"/>
+                    <field name="qty_to_invoice"/>
+                    <field name="product_uom" string="Unit of Measure" groups="uom.group_uom"/>
+                    <field name="route_id" groups="stock.group_adv_location" options="{'no_create': True}"/>
+                    <field name="price_subtotal" sum="Total" widget="monetary"/>
+                    <field name="currency_id" invisible="1"/>
+                  </tree>
+                </field>
+              </group>
+              <notebook name="studio_notebook_17e956">
+                <page id="invoice_tab" string="Invoice Lines" attrs="{}" name="studio_page_64cd85">
+                  <field name="invoice_line_ids" widget="section_and_note_one2many" mode="tree,kanban" context="{'default_move_type': context.get('default_move_type'), 'journal_id': journal_id, 'default_partner_id': commercial_partner_id, 'default_currency_id': currency_id or company_currency_id}">
+                    <tree editable="bottom" string="Journal Items" default_order="sequence, date desc, move_name desc, id" delete="true">
+                      <control>
+                        <create name="add_line_control" string="Add a line"/>
+                        <create name="add_section_control" string="Add a section" context="{'default_display_type': 'line_section'}"/>
+                        <create name="add_note_control" string="Add a note" context="{'default_display_type': 'line_note'}"/>
+                      </control>
+                      <field name="x_studio_asiento_del_libro" string="Asiento del Libro[]" attrs="{}" invisible="1"/>
+                      <field name="x_studio_historial_combo" string="historial combo"/>
+                      <field name="x_studio_many2one_field_wBxlc"/>
+                      <!-- Displayed fields -->
+                      <field name="sequence" widget="handle"/>
+                      <field name="product_id" optional="show" domain="                                                     context.get('default_move_type') in ('out_invoice', 'out_refund', 'out_receipt')                                                     and [('sale_ok', '=', True), '|', ('company_id', '=', False), ('company_id', '=', parent.company_id)]                                                     or [('purchase_ok', '=', True), '|', ('company_id', '=', False), ('company_id', '=', parent.company_id)]                                                "/>
+                      <field name="x_studio_productos_" string="productos_" attrs="{}" invisible="1"/>
+                      <field name="x_studio_descomposicion_combo_" string="descomposicion combo_" attrs="{}" invisible="1"/>
+                      <field name="move_name" invisible="1"/>
+                      <field name="name" widget="section_and_note_text" attrs="{'required': [('parent.move_type', 'not in', ('in_invoice', 'in_refund','in_receipt'))]}"/>
+                      <field name="product_type" invisible="1" studio-view-group-ids="43"/>
+                      <field name="is_landed_costs_line" string="Landed Costs" attrs="{'readonly': [('product_type', '!=', 'service')], 'column_invisible': [('parent.move_type', '!=', 'in_invoice')]}" optional="show" studio-view-group-ids="43"/>
+                      <field name="account_id" groups="account.group_account_readonly" options="{'no_create': True}" domain="[('deprecated', '=', False), ('user_type_id.type', 'not in', ('receivable', 'payable')), ('company_id', '=', parent.company_id), ('is_off_balance', '=', False)]" attrs="{'required': [('display_type', '=', False)]}"/>
+                      <field name="x_studio_peso_3" string="peso 3" attrs="{}" invisible="1"/>
+                      <field name="analytic_account_id" domain="['|', ('company_id', '=', False), ('company_id', '=', parent.company_id)]" groups="analytic.group_analytic_accounting" optional="show" attrs="{}"/>
+                      <field name="x_studio_cos_impu" string="Cos impu" attrs="{}" invisible="1"/>
+                      <field name="x_studio_cuenta_v" string="Cuenta v" attrs="{}" invisible="1"/>
+                      <field name="analytic_tag_ids" domain="['|', ('company_id', '=', False), ('company_id', '=', parent.company_id)]" groups="analytic.group_analytic_tags" optional="show" widget="many2many_tags" attrs="{}" invisible="1"/>
+                      <field name="quantity"/>
+                      <field name="x_studio_total_fac" string="Total fac" attrs="{}" invisible="1"/>
+                      <field name="product_uom_category_id" invisible="1"/>
+                      <field name="product_uom_id" string="UoM" groups="uom.group_uom" optional="show"/>
+                      <field name="x_studio_cargue_f" string="Cargue F"/>
+                      <field name="x_studio_costod" string="costoD" attrs="{}" invisible="1"/>
+                      <field name="price_unit" string="Price"/>
+                      <field name="line_trade_sample" invisible="1"/>
+                      <field name="line_price_reference" attrs="{}" invisible="1"/>
+                      <field name="discount" string="Disc.%" optional="hide" groups="product.group_discount_per_so_line"/>
+                      <field name="invoice_discount_text" attrs="{&quot;required&quot;: [[&quot;discount&quot;,&quot;!=&quot;,0]]}" invisible="1"/>
+                      <field name="x_studio_costo" attrs="{}" invisible="1"/>
+                      <field name="x_studio_impuestos_y_costos_de_las_actividades" string="impuestos y costos de las actividades" attrs="{}" invisible="1"/>
+                      <field name="x_studio_costo_impuesto_2" attrs="{}" invisible="1"/>
+                      <field name="tax_ids" widget="many2many_tags" domain="[('type_tax_use', '=?', parent.invoice_filter_type_domain), ('company_id', '=', parent.company_id)]" context="{'append_type_to_tax_name': not parent.invoice_filter_type_domain}" optional="show"/>
+                      <field name="price_subtotal" string="Subtotal" groups="account.group_show_line_subtotals_tax_excluded"/>
+                      <field name="price_total" string="Total" groups="account.group_show_line_subtotals_tax_included"/>
+                      <!-- Others fields -->
+                      <field name="partner_id" invisible="1"/>
+                      <field name="amount_currency" invisible="1"/>
+                      <field name="currency_id" invisible="1"/>
+                      <field name="debit" invisible="1"/>
+                      <field name="credit" invisible="1"/>
+                      <field name="date" invisible="1"/>
+                      <field name="date_maturity" invisible="1"/>
+                      <field name="tax_line_id" invisible="1"/>
+                      <field name="tax_repartition_line_id" invisible="1"/>
+                      <field name="tax_tag_ids" invisible="1"/>
+                      <field name="tax_base_amount" invisible="1"/>
+                      <field name="tax_exigible" invisible="1"/>
+                      <field name="company_id" invisible="1"/>
+                      <field name="purchase_line_id" invisible="1" studio-view-group-ids="55"/>
+                      <field name="purchase_order_id" attrs="{'column_invisible': [('parent.move_type', '!=', 'in_invoice')]}" optional="hide" studio-view-group-ids="55"/>
+                      <field name="company_currency_id" invisible="1"/>
+                      <field name="recompute_tax_line" invisible="1" force_save="1"/>
+                      <field name="predict_from_name" invisible="1" force_save="1"/>
+                      <field name="display_type" force_save="1" invisible="1"/>
+                      <field name="is_rounding_line" invisible="1"/>
+                      <field name="exclude_from_invoice_tab" invisible="1"/>
+                      <field name="account_internal_type" invisible="1"/>
+                      <field name="account_internal_group" invisible="1"/>
+                    </tree>
+                    <kanban class="o_kanban_mobile">
+                      <!-- Displayed fields -->
+                      <field name="name"/>
+                      <field name="product_id"/>
+                      <field name="price_subtotal" groups="account.group_show_line_subtotals_tax_excluded"/>
+                      <field name="price_total" groups="account.group_show_line_subtotals_tax_included"/>
+                      <field name="quantity"/>
+                      <field name="product_uom_category_id" invisible="1"/>
+                      <field name="product_uom_id" groups="uom.group_uom"/>
+                      <field name="price_unit"/>
+                      <templates>
+                        <t t-name="kanban-box">
+                          <div t-attf-class="oe_kanban_card oe_kanban_global_click {{ record.display_type.raw_value ? 'o_is_' + record.display_type.raw_value : '' }}" name="studio_div_1e687e">
+                            <t t-if="!record.display_type.raw_value">
+                              <div class="row" name="studio_div_ab5683">
+                                <div class="col-2" name="studio_div_9c519f">
+                                  <img t-att-src="kanban_image('product.product', 'image_128', record.product_id.raw_value)" t-att-title="record.product_id.value" t-att-alt="record.product_id.value" style="max-width: 100%;"/>
+                                </div>
+                                <div class="col-10" name="studio_div_b7d1e6">
+                                  <strong>
+                                    <span>
+                                      <t t-esc="record.product_id.value"/>
+                                    </span>
+                                  </strong>
+                                  <div class="text-muted" name="studio_div_839a33">
+                                                                    Quantity:
+                                                                    <t t-esc="record.quantity.value"/>
+                                    <t t-esc="record.product_uom_id.value"/>
+                                  </div>
+                                  <div class="text-muted" name="studio_div_420f46">
+                                                                    Unit Price:
+                                                                    <t t-esc="record.price_unit.value"/>
+                                  </div>
+                                  <strong>
+                                    <span class="float-right text-right">
+                                      <t t-esc="record.price_subtotal.value" groups="account.group_show_line_subtotals_tax_excluded"/>
+                                      <t t-esc="record.price_total.value" groups="account.group_show_line_subtotals_tax_included"/>
+                                    </span>
+                                  </strong>
+                                </div>
+                              </div>
+                            </t>
+                            <t t-if="record.display_type.raw_value === 'line_section' || record.display_type.raw_value === 'line_note'">
+                              <div class="row" name="studio_div_e2de37">
+                                <div class="col-12" name="studio_div_edeb38">
+                                  <span>
+                                    <t t-esc="record.name.value"/>
+                                  </span>
+                                </div>
+                              </div>
+                            </t>
+                          </div>
+                        </t>
+                      </templates>
+                      <!-- Others fields -->
+                      <field name="partner_id" invisible="1"/>
+                      <field name="amount_currency" invisible="1"/>
+                      <field name="currency_id" invisible="1"/>
+                      <field name="debit" invisible="1"/>
+                      <field name="credit" invisible="1"/>
+                      <field name="date" invisible="1"/>
+                      <field name="date_maturity" invisible="1"/>
+                      <field name="tax_line_id" invisible="1"/>
+                      <field name="tax_repartition_line_id" invisible="1"/>
+                      <field name="tax_tag_ids" invisible="1"/>
+                      <field name="tax_base_amount" invisible="1"/>
+                      <field name="tax_exigible" invisible="1"/>
+                      <field name="company_id" invisible="1"/>
+                      <field name="company_currency_id" invisible="1"/>
+                      <field name="recompute_tax_line" invisible="1" force_save="1"/>
+                      <field name="display_type" force_save="1" invisible="1"/>
+                      <field name="is_rounding_line" invisible="1"/>
+                      <field name="exclude_from_invoice_tab" invisible="1"/>
+                      <field name="account_internal_type" invisible="1"/>
+                      <field name="account_internal_group" invisible="1"/>
+                    </kanban>
+                    <form>
+                      <sheet name="studio_sheet_85b31f">
+                        <field name="product_uom_category_id" invisible="1"/>
+                        <field name="display_type" invisible="1"/>
+                        <field name="parent_state" invisible="1"/>
+                        <group name="studio_group_7931bd">
+                          <field name="partner_id" invisible="1"/>
+                          <field name="company_id" invisible="1"/>
+                          <field name="product_id" widget="many2one_barcode"/>
+                          <field name="quantity"/>
+                          <field name="product_uom_id" groups="uom.group_uom"/>
+                          <field name="price_unit"/>
+                          <field name="discount" groups="product.group_discount_per_so_line"/>
+                          <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group name="studio_group_f96479">
+                          <field name="analytic_tag_ids" groups="analytic.group_analytic_tags" widget="many2many_tags"/>
+                          <field name="account_id" options="{'no_create': True}" domain="[('company_id', '=', company_id)]" readonly="1"/>
+                          <field name="tax_ids" widget="many2many_tags"/>
+                          <field name="analytic_account_id" groups="analytic.group_analytic_accounting"/>
+                        </group>
+                        <label for="name" string="Description" attrs="{'invisible': [('display_type', '!=', False)]}"/>
+                        <label for="name" string="Section" attrs="{'invisible': [('display_type', '!=', 'line_section')]}"/>
+                        <label for="name" string="Note" attrs="{'invisible': [('display_type', '!=', 'line_note')]}"/>
+                        <field name="name" widget="text"/>
+                      </sheet>
+                    </form>
+                  </field>
+                  <!-- Totals (only invoices / receipts) -->
+                  <group class="oe_subtotal_footer oe_right" attrs="{'invisible': ['|', ('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt')),('payment_state' ,'=', 'invoicing_legacy')]}" name="studio_group_80e51d">
+                    <field name="amount_untaxed" attrs="{'invisible': [('amount_tax', '=', 0)]}"/>
+                    <field name="amount_tax" widget="account-tax-totals-field" attrs="{}"/>
+                    <field name="invoice_discount_view" attrs="{}" invisible="1"/>
+                    <field name="invoice_charges_freight" attrs="{'invisible': True}"/>
+                    <field name="invoice_charges_freight_view" attrs="{'invisible': [('fe_habilitada_compania', '!=', True)]}"/>
+                    <field name="x_studio_total_impuesto3_1" string="total impuesto" attrs="{}" invisible="1"/>
+                    <field name="amount_by_group" groups="account.amount_by_group" widget="account-tax-totals-field" nolabel="1" colspan="2" attrs="{}"/>
+                    <field name="amount_total" attrs="{'invisible': [('amount_tax', '!=', 0)]}"/>
+                    <field name="amount_total" class="oe_subtotal_footer_separator" attrs="{'invisible': [('amount_tax', '=', 0)]}"/>
+                    <field name="invoice_payments_widget" colspan="2" nolabel="1" widget="payment"/>
+                    <field name="amount_residual" class="oe_subtotal_footer_separator" attrs="{'invisible': [('state', '=', 'draft')]}"/>
+                  </group>
+                  <field name="narration" placeholder="Terms and Conditions" class="oe_inline" nolabel="1"/>
+                  <field name="invoice_outstanding_credits_debits_widget" class="oe_invoice_outstanding_credits_debits" colspan="2" nolabel="1" widget="payment" attrs="{'invisible': ['|', ('state', '!=', 'posted'), ('move_type', 'in', ('out_receipt', 'in_receipt'))]}"/>
+                </page>
+                <!-- Pestaña para eventos FE factura de proveedor -->
+                <page string="Eventos FE" name="enventos_fe" attrs="{'invisible': [('move_type', 'not in', ('in_invoice','in_refound'))]}">
+                  <notebook name="studio_notebook_bd2ee0">
+                    <page string="Acuse recibo" name="acuse_recibo">
+                      <group name="studio_group_a5de61">
+                        <button name="send_acknowledgement_electronic_invoice" type="object" string="Evento Acuse de Recibo" attrs="{'invisible':['|',('fe_habilitada_compania', '!=', True),('state','!=','posted')]}"/>
+                        <field name="file_send_acknowledgement_electronic_invoice" string="XML" readonly="1" force_save="1"/>
+                        <field name="answer_send_acknowledgement_electronic_invoice" readonly="1" force_save="1"/>
+                        <button name="reset_acknowledgement_electronic_invoice" type="object" string="Borrar evento Acuse de Recibo" attrs="{'invisible':['|',('fe_habilitada_compania', '!=', True),('state','!=','posted')]}"/>
+                        <field name="email_send_acknowledgement_electronic_invoice" readonly="1" force_save="1"/>
+                        <button name="send_email_acknowledgement_electronic_invoice" type="object" string="Reenviar correo evento Acuse de Recibo" attrs="{'invisible':['|',('fe_habilitada_compania', '!=', True),('state','!=','posted')]}"/>
+                      </group>
+                    </page>
+                    <page string="Reclamo de la factura de venta" name="reclamo">
+                      <group name="studio_group_6c55ad">
+                        <button name="electronic_sales_invoice_claim" type="object" string="Evento Reclamo de Factura de venta" attrs="{'invisible':['|',('fe_habilitada_compania', '!=', True),('state','!=','posted')]}"/>
+                        <field name="file_electronic_sales_invoice_claim" string="XML" readonly="1" force_save="1"/>
+                        <field name="answer_electronic_sales_invoice_claim" readonly="1" force_save="1"/>
+                        <button name="reset_electronic_sales_invoice_claim" type="object" string="Borrar evento Reclamo de Factura de venta" attrs="{'invisible':['|',('fe_habilitada_compania', '!=', True),('state','!=','posted')]}"/>
+                        <field name="email_electronic_sales_invoice_claim" readonly="1" force_save="1"/>
+                        <button name="send_email_electronic_sales_invoice_claim" type="object" string="Reenviar correo evento Reclamo de Factura de venta" attrs="{'invisible':['|',('fe_habilitada_compania', '!=', True),('state','!=','posted')]}"/>
+                      </group>
+                    </page>
+                    <page string="Recepción de bienes o servicios" name="bienes_servicios">
+                      <group name="studio_group_b8f949">
+                        <button name="receipt_services" type="object" string="Evento Recepción de bienes o servicios" attrs="{'invisible':['|',('fe_habilitada_compania', '!=', True),('state','!=','posted')]}"/>
+                        <field name="file_receipt_services" string="XML" readonly="1" force_save="1"/>
+                        <field name="answer_receipt_services" readonly="1" force_save="1"/>
+                        <button name="reset_receipt_services" type="object" string="Borrar evento Recepción de bienes o servicios" attrs="{'invisible':['|',('fe_habilitada_compania', '!=', True),('state','!=','posted')]}"/>
+                        <field name="email_receipt_services" readonly="1" force_save="1"/>
+                        <button name="send_email_receipt_services" type="object" string="Reenviar correo evento Recepción de bienes o servicios" attrs="{'invisible':['|',('fe_habilitada_compania', '!=', True),('state','!=','posted')]}"/>
+                      </group>
+                    </page>
+                    <page string="Aceptación expresa" name="aceptacion_expresa">
+                      <group name="studio_group_5ec750">
+                        <button name="express_acceptance" type="object" string="Evento Aceptación expresa" attrs="{'invisible':['|',('fe_habilitada_compania', '!=', True),('state','!=','posted')]}"/>
+                        <field name="file_express_acceptance" string="XML" readonly="1" force_save="1"/>
+                        <field name="answer_express_acceptance" readonly="1" force_save="1"/>
+                        <button name="reset_express_acceptance" type="object" string="Borrar evento Aceptación expresa" attrs="{'invisible':['|',('fe_habilitada_compania', '!=', True),('state','!=','posted')]}"/>
+                        <field name="email_express_acceptance" readonly="1" force_save="1"/>
+                        <button name="send_email_express_acceptance" type="object" string="Reenviar correo evento Aceptación expresa" attrs="{'invisible':['|',('fe_habilitada_compania', '!=', True),('state','!=','posted')]}"/>
+                      </group>
+                    </page>
+                  </notebook>
+                </page>
+                <page string="Facturación Electrónica" attrs="{'invisible': ['|',('tipo_resolucion', '!=', 'facturacion-electronica'),('fe_habilitada_compania', '!=', True)]}" name="studio_page_21b8dd">
+                  <group name="studio_group_5422c2">
+                    <field name="enviada" string="Enviada a la DIAN" attrs="{'invisible': [('state', 'in', 'draft')]}" readonly="1"/>
+                    <field name="envio_fe_id" string="Registro de envío" attrs="{'invisible': [('envio_fe_id', '=', False)]}" readonly="1"/>
+                    <field name="fe_approved" attrs="{'invisible': [('state', 'in', 'draft')]}" readonly="1"/>
+                    <field name="fe_feedback" attrs="{'invisible': [('fe_approved', '!=', 'rechazada')]}" readonly="1"/>
+                  </group>
+                  <!-- Eventos FE factura de cliente-->
+                  <group name="studio_group_a53c2f">
+                    <group name="studio_group_2ac797">
+                      <field name="file_send_acknowledgement_electronic_invoice" string="Evento Acuse de Recibo" attrs="{'invisible': ['|',('move_type', 'not in', ('out_invoice','out_refound')), ('envio_fe_id', '=', False)]}"/>
+                      <field name="file_electronic_sales_invoice_claim" string="Evento Reclamo de factura de venta" attrs="{'invisible': ['|',('move_type', 'not in', ('out_invoice','out_refound')), ('envio_fe_id', '=', False)]}"/>
+                      <field name="file_receipt_services" string="Evento Recepción de bienes y servicios" attrs="{'invisible': ['|',('move_type', 'not in', ('out_invoice','out_refound')), ('envio_fe_id', '=', False)]}"/>
+                      <field name="file_express_acceptance" string="Evento Aceptación expresa" attrs="{'invisible': ['|',('move_type', 'not in', ('out_invoice','out_refound')), ('envio_fe_id', '=', False)]}"/>
+                    </group>
+                    <group name="studio_group_756857">
+                      <button name="tacit_acceptance" type="object" string="Evento Aceptación tácita" attrs="{'invisible':['|',('fe_habilitada_compania', '!=', True),('state','!=','posted')]}"/>
+                      <field name="file_tacit_acceptance" string="XML" readonly="1" force_save="1"/>
+                      <field name="answer_tacit_acceptance" readonly="1" force_save="1"/>
+                      <button name="reset_tacit_acceptance" type="object" string="Borrar evento Aceptación tácita" attrs="{'invisible':['|',('fe_habilitada_compania', '!=', True),('state','!=','posted')]}"/>
+                    </group>
+                  </group>
+                </page>
+                <page string="Anticipos a usar en conciliación" attrs="{}" invisible="1" name="studio_page_115fc2">
+                  <group name="studio_group_677062">
+                    <field name="pre_payment_line_ids" domain="[('partner_id','=',partner_id),('move_id.state', '=', 'posted'),('reconciled', '=', False),('amount_residual','&lt;',0)]">
+                      <tree editable="bottom">
+                        <field name="name"/>
+                        <field name="amount_residual" string="Valor por conciliar"/>
+                        <field name="amount_residual_currency" string="Valor por conciliar moneda extranjera"/>
+                      </tree>
+                    </field>
+                    <field name="subtotal_pendiente_pago"/>
+                  </group>
+                </page>
+                <page string="Archivos Soporte" attrs="{'invisible': [('fe_habilitada_compania', '!=', True)]}" name="studio_page_6a46b5">
+                  <group name="studio_group_b49183">
+                    <field name="fe_archivos_email" widget="one2many_list">
+                      <tree editable="bottom">
+                        <field name="nombre_archivo_envio"/>
+                        <field name="archivo_envio"/>
+                      </tree>
+                    </field>
+                  </group>
+                </page>
+                <page id="aml_tab" string="Journal Items" groups="account.group_account_readonly" name="studio_page_c2bd37">
+                  <div class="alert alert-info text-center mb-0" role="alert" attrs="{'invisible': ['|', ('payment_state', '!=', 'invoicing_legacy'), ('move_type', '=', 'entry')]}" name="studio_div_9a0e50">
+                    <span>This entry has been generated through the Invoicing app, before installing Accounting. Its balance has been imported separately.</span>
+                  </div>
+                  <field name="line_ids" context="{'default_move_type': context.get('default_move_type'), 'line_ids': line_ids, 'journal_id': journal_id, 'default_partner_id': commercial_partner_id, 'default_currency_id': currency_id or company_currency_id}" attrs="{'invisible': [('payment_state', '=', 'invoicing_legacy'), ('move_type', '!=', 'entry')]}">
+                    <tree editable="bottom" string="Journal Items" decoration-muted="display_type in ('line_section', 'line_note')" default_order="sequence, date desc, move_name desc, id">
+                      <!-- Displayed fields -->
+                      <field name="account_id" attrs="{                                                     'required': [('display_type', 'not in', ('line_section', 'line_note'))],                                                     'invisible': [('display_type', 'in', ('line_section', 'line_note'))],                                                }" domain="[('deprecated', '=', False), ('company_id', '=', parent.company_id)]"/>
+                      <field name="x_studio_liquidacion"/>
+                      <field name="x_studio_total_liqui"/>
+                      <field name="partner_id" domain="['|', ('parent_id', '=', False), ('is_company', '=', True)]" attrs="{'column_invisible': [('parent.move_type', '!=', 'entry')]}"/>
+                      <field name="name" widget="section_and_note_text" optional="show"/>
+                      <field name="product_type" invisible="1" studio-view-group-ids="43"/>
+                      <field name="is_landed_costs_line" invisible="1" studio-view-group-ids="43"/>
+                      <field name="analytic_account_id" optional="hide" domain="['|', ('company_id', '=', parent.company_id), ('company_id', '=', False)]" groups="analytic.group_analytic_accounting" attrs="{'invisible': [('display_type', 'in', ('line_section', 'line_note'))]}"/>
+                      <field name="analytic_tag_ids" optional="show" groups="analytic.group_analytic_tags" widget="many2many_tags" attrs="{'invisible': [('display_type', 'in', ('line_section', 'line_note'))]}"/>
+                      <field name="x_studio_historial_combo"/>
+                      <field name="date_maturity" optional="hide" invisible="context.get('view_no_maturity')" attrs="{'invisible': [('display_type', 'in', ('line_section', 'line_note'))]}"/>
+                      <field name="amount_currency" groups="base.group_multi_currency" optional="hide"/>
+                      <field name="currency_id" options="{'no_create': True}" groups="base.group_multi_currency" attrs="{'column_invisible': [('parent.move_type', '!=', 'entry')]}"/>
+                      <field name="tax_ids" widget="many2many_tags" optional="hide" domain="[('type_tax_use', '=?', parent.invoice_filter_type_domain)]" context="{'append_type_to_tax_name': not parent.invoice_filter_type_domain}" options="{'no_create': True}" force_save="1" attrs="{'readonly': [                                                     '|', '|',                                                     ('display_type', 'in', ('line_section', 'line_note')),                                                     ('tax_line_id', '!=', False),                                                     '&amp;',                                                     ('parent.move_type', 'in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt')),                                                     ('account_internal_type', 'in', ('receivable', 'payable')),                                                 ]}"/>
+                      <field name="debit" sum="Total Debit" attrs="{'invisible': [('display_type', 'in', ('line_section', 'line_note'))]}"/>
+                      <field name="credit" sum="Total Credit" attrs="{'invisible': [('display_type', 'in', ('line_section', 'line_note'))]}"/>
+                      <field name="x_studio_costo_impuesto_2"/>
+                      <field name="x_studio_many2one_field_wBxlc"/>
+                      <field name="tax_fiscal_country_id" invisible="1"/>
+                      <field name="tax_tag_ids" widget="many2many_tags" string="Tax Grids" optional="show" domain="[('country_id', '=', tax_fiscal_country_id), ('applicability', '=', 'taxes')]"/>
+                      <field name="x_studio_liq_final_" string="Liq Final_" attrs="{}" invisible="1"/>
+                      <!-- Buttons -->
+                      <button name="action_automatic_entry" type="object" icon="fa-calendar" string="Cut-Off" aria-label="Change Period" class="float-right" attrs="{'invisible': [('account_internal_group', 'not in', ('income', 'expense'))], 'column_invisible': ['|', ('parent.move_type', '=', 'entry'), ('parent.state', '!=', 'posted')]}" context="{'hide_automatic_options': 1, 'default_action': 'change_period'}"/>
+                      <!-- Others fields -->
+                      <field name="payment_id" invisible="1"/>
+                      <field name="product_id" invisible="1"/>
+                      <field name="quantity" invisible="1"/>
+                      <field name="line_price_reference" invisible="1"/>
+                      <field name="product_uom_category_id" invisible="1"/>
+                      <field name="product_uom_id" invisible="1"/>
+                      <field name="price_unit" invisible="1"/>
+                      <field name="discount" invisible="1"/>
+                      <field name="price_subtotal" invisible="1"/>
+                      <field name="price_total" invisible="1"/>
+                      <field name="sequence" invisible="1"/>
+                      <field name="move_name" invisible="1"/>
+                      <field name="date" invisible="1"/>
+                      <field name="tax_line_id" invisible="1"/>
+                      <field name="tax_group_id" invisible="1"/>
+                      <field name="tax_repartition_line_id" invisible="1" force_save="1"/>
+                      <field name="tax_base_amount" invisible="1" force_save="1"/>
+                      <field name="tax_exigible" invisible="1" force_save="1"/>
+                      <field name="company_id" invisible="1"/>
+                      <field name="purchase_line_id" invisible="1" studio-view-group-ids="55"/>
+                      <field name="company_currency_id" invisible="1"/>
+                      <field name="recompute_tax_line" invisible="1" force_save="1"/>
+                      <field name="predict_from_name" invisible="1" force_save="1"/>
+                      <field name="display_type" force_save="1" invisible="1"/>
+                      <field name="is_rounding_line" invisible="1"/>
+                      <field name="exclude_from_invoice_tab" invisible="1"/>
+                      <field name="account_internal_type" invisible="1"/>
+                      <field name="account_internal_group" invisible="1"/>
+                    </tree>
+                    <!-- Form view to cover mobile use -->
+                    <form>
+                      <group name="studio_group_93ac55">
+                        <field name="tax_line_id" invisible="1"/>
+                        <field name="account_id" domain="[('company_id', '=', parent.company_id), ('deprecated', '=', False)]"/>
+                        <field name="partner_id" domain="['|', ('parent_id', '=', False), ('is_company', '=', True)]"/>
+                        <field name="name"/>
+                        <field name="analytic_account_id" groups="analytic.group_analytic_accounting"/>
+                        <field name="analytic_tag_ids" groups="analytic.group_analytic_tags" widget="many2many_tags"/>
+                        <field name="amount_currency" groups="base.group_multi_currency"/>
+                        <field name="company_currency_id" invisible="1"/>
+                        <field name="company_id" invisible="1"/>
+                        <field name="currency_id" options="{'no_create': True}" groups="base.group_multi_currency"/>
+                        <field name="debit" sum="Total Debit"/>
+                        <field name="credit" sum="Total Credit"/>
+                        <field name="tax_ids" string="Taxes Applied" widget="many2many_tags" options="{'no_create': True}"/>
+                        <field name="date_maturity" required="0" invisible="context.get('view_no_maturity', False)"/>
+                        <field name="recompute_tax_line" invisible="1" readonly="1"/>
+                      </group>
+                    </form>
+                  </field>
+                </page>
+                <page id="other_tab" string="Other Info" name="other_info" attrs="{}">
+                  <group id="other_tab_group" name="studio_group_23366c">
+                    <group string="Invoice" name="sale_info_group" attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund'))]}">
+                      <field name="x_studio_campo_bandera_cargue" string="Cargue asociado a la factura"/>
+                      <label for="ref" string="Customer Reference"/>
+                      <field name="ref" nolabel="1"/>
+                      <field name="invoice_user_id" domain="[('share', '=', False)]" widget="many2one_avatar_user"/>
+                      <field name="credited_invoice_id" attrs="{'readonly': [('fe_habilitada_compania', '=', True)], 'invisible': [('es_nota_debito', '=', False),('fe_habilitada_compania', '!=', True)]}"/>
+                      <field name="company_partner_id" attrs="{'invisible': True}"/>
+                      <field name="fe_sucursal" domain="[('parent_id', '=', company_partner_id), ('type','!=','contact')]" attrs="{'invisible': [('fe_habilitada_compania', '!=', True)]}"/>
+                      <field name="order_reference" attrs="{'invisible': [('fe_habilitada_compania', '!=', True)]}"/>
+                      <field name="order_reference_date" attrs="{'invisible': [('order_reference', '=', False)]}"/>
+                      <field name="additional_document_reference" attrs="{'invisible': [('fe_habilitada_compania', '!=', True)]}"/>
+                      <field name="despatch_document_reference" attrs="{'invisible': [('fe_habilitada_compania', '=', False)]}"/>
+                      <field name="despatch_document_reference_date" attrs="{'invisible': [('despatch_document_reference', '=', False)]}"/>
+                      <field name="receipt_document_reference" attrs="{'invisible': [('fe_habilitada_compania', '=', False)]}"/>
+                      <field name="receipt_document_reference_date" attrs="{'invisible': [('receipt_document_reference', '=', False)]}"/>
+                      <field name="team_id" kanban_view_ref="1053"/>
+                      <field name="invoice_origin" string="Source Document" force_save="1" attrs="{}"/>
+                      <field name="debit_origin_id" attrs="{'invisible': [('debit_origin_id', '=', False)]}"/>
+                      <field name="partner_bank_id" context="{'default_partner_id': bank_partner_id}" domain="[('partner_id', '=', bank_partner_id)]" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                      <field name="qr_code_method" attrs="{'invisible': [('display_qr_code', '=', False)]}"/>
+                    </group>
+                    <group string="Accounting" name="accounting_info_group" attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund'))]}">
+                      <field name="company_id" groups="base.group_multi_company"/>
+                      <field name="invoice_incoterm_id" attrs="{'required': [('es_factura_exportacion', '=', True), ('fe_habilitada_compania', '=', True)]}"/>
+                      <field name="fiscal_position_id"/>
+                      <field name="inalterable_hash" groups="base.group_no_one"/>
+                      <field name="invoice_cash_rounding_id" groups="account.group_cash_rounding"/>
+                      <field name="invoice_source_email" widget="email" attrs="{'invisible': ['|', ('move_type', 'not in', ('in_invoice', 'in_refund')), ('invoice_source_email', '=', False)]}"/>
+                      <field name="auto_post" attrs="{'readonly': ['|',('reversed_entry_id', '!=', False),('state','!=','draft')]}"/>
+                      <field name="to_check"/>
+                    </group>
+                    <group string="Extraction Information" name="extraction_info_group" attrs="{'invisible': ['|', ('move_type', 'not in', ('in_invoice', 'in_refund')), ('extract_state', 'in', ('no_extract_requested', 'not_enough_credit'))]}" groups="base.group_no_one">
+                      <field name="extract_remote_id"/>
+                    </group>
+                    <group string="Marketing" name="utm_link" groups="base.group_no_one" attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund'))]}">
+                      <field name="campaign_id"/>
+                      <field name="medium_id"/>
+                      <field name="source_id"/>
+                    </group>
+                  </group>
+                </page>
+                <page id="edi_documents" string="EDI Documents" groups="base.group_no_one" attrs="{}" invisible="1" name="studio_page_5f7112">
+                  <field name="edi_document_ids">
+                    <tree create="false" delete="false" edit="false" decoration-danger="error">
+                      <field name="name"/>
+                      <field name="edi_format_name"/>
+                      <field name="state"/>
+                      <field name="error" invisible="1"/>
+                    </tree>
+                  </field>
+                </page>
+                <page id="other_tab_entry" string="Other Info" name="other_info" attrs="{'invisible': [('move_type', '!=', 'entry')]}">
+                  <group id="other_tab_entry_group" name="studio_group_e77e3f">
+                    <group name="misc_group">
+                      <field name="auto_post" attrs="{'invisible': [('move_type', '!=', 'entry')], 'readonly': ['|',('reversed_entry_id', '!=', False),('state','!=','draft')]}"/>
+                      <field name="reversed_entry_id" attrs="{'invisible': [('move_type', '!=', 'entry')]}"/>
+                      <field name="to_check" attrs="{'invisible': [('move_type', '!=', 'entry')]}"/>
+                    </group>
+                    <group name="studio_group_c78865">
+                      <field name="company_id" groups="base.group_multi_company" required="1"/>
+                      <field name="inalterable_hash" groups="base.group_no_one"/>
+                    </group>
+                  </group>
+                  <!-- Internal note -->
+                  <field name="narration" placeholder="Add an internal note..." nolabel="1" height="50"/>
+                </page>
+              </notebook>
+            </sheet>
+            <!-- Attachment preview -->
+            <!-- Chatter -->
+          </form>
+          <tree string="Invoices" js_class="account_tree" sample="1" default_order="invoice_date asc" multi_edit="false">
+            <header>
+              <button name="action_register_payment" type="object" string="Register Payment" groups="account.group_account_user" invisible="context.get('default_move_type') not in ('out_invoice', 'out_refund', 'out_receipt', 'in_invoice', 'in_refund','in_receipt')"/>
+              <button name="1722" type="action" string="borrar"/>
+            </header>
+            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}" optional="show"/>
+            <field name="id" string="Documento"/>
+            <field name="name" decoration-bf="1" string="Factura"/>
+            <field name="x_studio_client"/>
+            <field name="date"/>
+            <field name="partner_id" invisible="1"/>
+            <field name="invoice_source_email" invisible="1"/>
+            <field name="invoice_partner_display_name" invisible="context.get('default_move_type') not in ('in_invoice', 'in_refund','in_receipt')" groups="base.group_user" string="Vendor"/>
+            <field name="invoice_partner_display_name" invisible="context.get('default_move_type') not in ('out_invoice', 'out_refund','out_receipt')" groups="base.group_user" string="Customer"/>
+            <field name="invoice_date" optional="show" invisible="context.get('default_move_type') not in ('in_invoice', 'in_refund','in_receipt')" string="Bill Date"/>
+            <field name="invoice_date" optional="show" invisible="context.get('default_move_type') not in ('out_invoice', 'out_refund','out_receipt')" string="Invoice Date"/>
+            <field name="invoice_origin" optional="hide" string="Source Document"/>
+            <field name="payment_reference" optional="hide" invisible="context.get('default_move_type') in ('out_invoice', 'out_refund','out_receipt')"/>
+            <field name="ref" optional="hide"/>
+            <field name="invoice_user_id" optional="hide" invisible="context.get('default_move_type') not in ('out_invoice', 'out_refund','out_receipt')" string="Sales Person" widget="many2one_avatar_user"/>
+            <field name="amount_tax_signed" string="Tax" sum="Total" optional="hide"/>
+            <field name="amount_residual_signed" string="Amount Due" sum="Amount Due" optional="hide"/>
+            <field name="currency_id" invisible="1"/>
+            <field name="company_currency_id" invisible="1"/>
+            <field name="state" widget="badge" decoration-success="state == 'posted'" decoration-info="state == 'draft'" optional="show" attrs="{}" invisible="1"/>
+            <field name="amount_total_signed" string="Total" sum="Total" decoration-bf="1" optional="show"/>
+            <field name="move_type" invisible="context.get('default_move_type', True)"/>
+          </tree>
+        </field>
+        <label for="x_studio_remisiones_stock" string="Remisiones"/>
+        <field name="x_studio_remisiones_stock" attrs="{&quot;readonly&quot;: [[&quot;x_studio_selection_field_RI9Dd&quot;,&quot;=&quot;,&quot;Procesado&quot;]]}">
+          <form string="Transfer">
+            <field name="is_locked" invisible="1"/>
+            <field name="show_mark_as_todo" invisible="1"/>
+            <field name="show_check_availability" invisible="1"/>
+            <field name="show_validate" invisible="1"/>
+            <field name="show_lots_text" invisible="1"/>
+            <field name="immediate_transfer" invisible="1"/>
+            <field name="picking_type_code" invisible="1"/>
+            <field name="hide_picking_type" invisible="1"/>
+            <field name="show_operations" invisible="1" readonly="1"/>
+            <field name="show_reserved" invisible="1" readonly="1"/>
+            <field name="move_line_exist" invisible="1"/>
+            <field name="has_packages" invisible="1"/>
+            <field name="picking_type_entire_packs" invisible="1"/>
+            <field name="use_create_lots" invisible="1"/>
+            <header>
+              <button name="action_confirm" attrs="{'invisible': [('show_mark_as_todo', '=', False)]}" string="Mark as Todo" type="object" class="oe_highlight" groups="base.group_user"/>
+              <button name="action_assign" attrs="{'invisible': [('show_check_availability', '=', False)]}" string="Check Availability" type="object" class="oe_highlight" groups="base.group_user"/>
+              <button name="button_validate" attrs="{'invisible': ['|', ('state', 'in', ('waiting','confirmed')), ('show_validate', '=', False)]}" string="Validate" type="object" class="oe_highlight" groups="stock.group_stock_user" barcode_trigger="validate"/>
+              <button name="button_validate" attrs="{'invisible': ['|', ('state', 'not in', ('waiting', 'confirmed')), ('show_validate', '=', False)]}" string="Validate" type="object" groups="stock.group_stock_user" class="o_btn_validate"/>
+              <widget name="signature" string="Sign" highlight="1" attrs="{'invisible': ['|', '|', ('id', '=', False), ('picking_type_code', '!=', 'outgoing'), ('state', '!=', 'done')]}" full_name="partner_id" groups="stock.group_stock_sign_delivery"/>
+              <widget name="signature" string="Sign" attrs="{'invisible': ['|', '|', ('id', '=', False), ('picking_type_code', '!=', 'outgoing'), ('state', '=', 'done')]}" full_name="partner_id" groups="stock.group_stock_sign_delivery"/>
+              <button name="do_print_picking" string="Print" groups="stock.group_stock_user" type="object" attrs="{'invisible': [('state', 'not in', ('assigned', 'partially_available'))]}" barcode_trigger="print-op"/>
+              <button name="393" string="Print" attrs="{'invisible': [('state', '!=', 'done')]}" type="action" groups="base.group_user" barcode_trigger="print-slip"/>
+              <button name="413" string="Return" attrs="{'invisible': [('state', '!=', 'done')]}" type="action" groups="base.group_user"/>
+              <button name="do_unreserve" string="Unreserve" groups="base.group_user" type="object" attrs="{'invisible': ['|', '|', '|', ('picking_type_code', '=', 'incoming'), ('immediate_transfer', '=', True), '&amp;', ('state', 'not in', ('assigned', 'partially_available')), ('move_type', '!=', 'one'), '&amp;', ('state', 'not in', ('assigned', 'partially_available', 'confirmed')), ('move_type', '=', 'one')]}"/>
+              <button name="button_scrap" type="object" string="Scrap" attrs="{'invisible': ['|', '&amp;', ('picking_type_code', '=', 'incoming'), ('state', '!=', 'done'), '&amp;', ('picking_type_code', '=', 'outgoing'), ('state', '=', 'done')]}" barcode_trigger="scrap"/>
+              <button name="action_toggle_is_locked" attrs="{'invisible': ['|', ('state', 'in', ('draft','cancel')), ('is_locked', '=', False)]}" string="Unlock" groups="stock.group_stock_manager" type="object" help="If the picking is unlocked you can edit initial demand (for a draft picking) or done quantities (for a done picking)."/>
+              <button name="action_toggle_is_locked" attrs="{'invisible': [('is_locked', '=', True)]}" string="Lock" groups="stock.group_stock_manager" type="object"/>
+              <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,assigned,done" attrs="{}"/>
+              <button name="action_cancel" attrs="{'invisible': [('state', 'not in', ('assigned', 'confirmed', 'partially_available', 'draft', 'waiting'))]}" string="Cancel" groups="base.group_user" type="object" barcode_trigger="cancel"/>
+              <button name="send_to_shipper" string="Send to Shipper" type="object" attrs="{'invisible':['|','|','|','|',('carrier_tracking_ref','!=',False),('delivery_type','in', ['fixed', 'base_on_rule']),('delivery_type','=',False),('state','not in',('done')),('picking_type_code', '=', 'incoming')]}"/>
+              <button name="print_return_label" string="Print Return Label" type="object" attrs="{'invisible':['|', '|', ('is_return_picking', '=', False),('state', '=', 'done'),('picking_type_code', '!=', 'incoming')]}"/>
+            </header>
+            <sheet name="studio_sheet_640235">
+              <div class="oe_button_box" name="button_box">
+                <field name="has_scrap_move" invisible="True"/>
+                <field name="has_tracking" invisible="True"/>
+                <button name="action_see_move_scrap" string="Scraps" type="object" class="oe_stat_button" icon="fa-arrows-v" attrs="{'invisible': [('has_scrap_move', '=', False)]}"/>
+                <button name="action_see_packages" string="Packages" type="object" class="oe_stat_button" icon="fa-cubes" attrs="{'invisible': [('has_packages', '=', False)]}"/>
+                <button name="386" icon="fa-arrow-up" class="oe_stat_button" string="Traceability" type="action" attrs="{'invisible': ['|', ('state', '!=', 'done'), ('has_tracking', '=', False)]}" groups="stock.group_production_lot"/>
+                <!-- Use the following button to avoid onchange on one2many -->
+                <button name="action_picking_move_tree" class="oe_stat_button" icon="fa-arrows-v" type="object" help="List view of operations" groups="base.group_no_one" attrs="{'invisible': ['|', '&amp;', ('show_operations', '=', True), '|', ('is_locked', '=', True), ('state', '=', 'done'), '&amp;', ('state', '=', 'done'), ('is_locked', '=', True)]}" context="{'picking_type_code': picking_type_code, 'default_picking_id': id, 'form_view_ref':'stock.view_move_form', 'address_in_id': partner_id, 'default_picking_type_id': picking_type_id, 'default_location_id': location_id, 'default_location_dest_id': location_dest_id}">
+                  <div class="o_form_field o_stat_info" name="studio_div_401a75">
+                    <span class="o_stat_text">Operations</span>
+                  </div>
+                </button>
+                <button string="Valuation" type="object" name="action_view_stock_valuation_layers" class="oe_stat_button" icon="fa-dollar" groups="base.group_no_one" attrs="{'invisible': [('state', 'not in', ['done'])]}"/>
+                <button type="object" name="open_website_url" class="oe_stat_button" icon="fa-truck" string="Tracking" attrs="{'invisible': ['|','|',('carrier_tracking_ref','=',False),('carrier_id', '=', False),('delivery_type','=','grid')]}"/>
+              </div>
+              <div class="oe_title" name="studio_div_2e8017">
+                <h1>
+                  <field name="priority" widget="priority" class="mr-3" attrs="{'invisible': [('name','=','/')]}"/>
+                  <field name="name" attrs="{'invisible': [('name','=','/')]}" string="Remision"/>
+                </h1>
+              </div>
+              <group name="studio_group_d8518c">
+                <group name="studio_group_edc05c">
+                  <div class="o_td_label" name="studio_div_3eb2da">
+                    <label for="partner_id" string="Tercero" style="font-weight:bold;" attrs="{'invisible': [('picking_type_code', '!=', 'outgoing')]}"/>
+                    <label for="partner_id" string="Receive From" style="font-weight:bold;" attrs="{'invisible': [('picking_type_code', '!=', 'incoming')]}"/>
+                    <label for="partner_id" string="Contact" style="font-weight:bold;" attrs="{'invisible': [('picking_type_code', 'in', ['incoming', 'outgoing'])]}"/>
+                  </div>
+                  <field name="partner_id" nolabel="1" attrs="{'required': ['&amp;', ('delivery_type', '!=', False), ('delivery_type', 'not in', ['fixed', 'base_on_rule'])]}" string="Tercero"/>
+                  <field name="product_id"/>
+                  <field name="x_studio_estado_borrador" string="estado borrador"/>
+                  <field name="x_studio_cliente_res" attrs="{}" invisible="1"/>
+                  <field name="x_studio_ubica" string="ubicacion" attrs="{}"/>
+                  <field name="picking_type_id" attrs="{&quot;invisible&quot;: [[&quot;hide_picking_type&quot;,&quot;=&quot;,True]]}"/>
+                  <field name="x_studio_many2one_field_Ywuo0" attrs="{}" string="Cargue de facturas"/>
+                  <field name="location_id" groups="stock.group_stock_multi_locations" attrs="{&quot;readonly&quot;: [[&quot;state&quot;,&quot;not in&quot;,[&quot;draft&quot;]]]}" invisible="1"/>
+                  <field name="location_dest_id" groups="stock.group_stock_multi_locations" attrs="{}"/>
+                  <field name="x_studio_alistado_remi"/>
+                  <field name="x_studio_en_cargue_r" string="En cargue R"/>
+                  <field name="backorder_id" attrs="{'invisible': [('backorder_id','=',False)]}"/>
+                </group>
+                <group name="studio_group_99111d">
+                  <label for="scheduled_date"/>
+                  <div class="o_row" name="studio_div_6a76ac">
+                    <field name="scheduled_date" attrs="{'required': [('id', '!=', False)]}" decoration-warning="state not in ('done', 'cancel') and scheduled_date &lt; now" decoration-danger="state not in ('done', 'cancel') and scheduled_date &lt; current_date" decoration-bf="state not in ('done', 'cancel') and (scheduled_date &lt; current_date or scheduled_date &lt; now)"/>
+                    <field name="json_popover" widget="stock_rescheduling_popover" attrs="{'invisible': [('json_popover', '=', False)]}"/>
+                  </div>
+                  <field name="date_deadline" attrs="{'invisible': ['|', ('state', 'in', ('done', 'cancel')), ('date_deadline', '=', False)]}" decoration-danger="date_deadline and date_deadline &lt; current_date" decoration-bf="date_deadline and date_deadline &lt; current_date"/>
+                  <field name="date_done" string="Effective Date" attrs="{'invisible': [('state', '!=', 'done')]}"/>
+                  <field name="origin" placeholder="e.g. PO0032"/>
+                  <field name="owner_id" groups="stock.group_tracking_owner" attrs="{'invisible': [('picking_type_code', '!=', 'incoming')]}"/>
+                  <field name="x_studio_remisiones_1" string="Remisiones"/>
+                  <field name="x_studio_many2one_field_Q4gJf" string="Novedad del recibo"/>
+                  <field name="x_studio_novedad_del_documento_r" string="Novedad del documento r"/>
+                  <field name="x_studio_observacion_remi" string="Observacion"/>
+                  <field name="x_studio_total_remi" string="total remi" force_save="True" attrs="{}" readonly="1"/>
+                  <field name="x_studio_total_monetary_gf" attrs="{}"/>
+                </group>
+              </group>
+              <notebook name="studio_notebook_d16ca9">
+                <!-- Reservation hidden -->
+                <page string="Detailed Operations" name="detailed_operations_hidden" attrs="{'invisible': ['|', ('show_operations', '=', False), ('show_reserved', '=', True)]}">
+                  <field name="move_line_nosuggest_ids" attrs="{'readonly': ['|', '|', ('show_operations', '=', False), ('state', '=', 'cancel'), '&amp;', ('state', '=', 'done'), ('is_locked', '=', True)]}" context="{'tree_view_ref': 'stock.view_stock_move_line_detailed_operation_tree', 'default_picking_id': id, 'default_location_id': location_id, 'default_location_dest_id': location_dest_id, 'default_company_id': company_id}">
+                    <tree editable="bottom" decoration-muted="(state == 'done' and is_locked == True)" decoration-danger="qty_done&gt;product_uom_qty and state!='done' and parent.picking_type_code != 'incoming'" decoration-success="qty_done==product_uom_qty and state!='done' and not result_package_id">
+                      <field name="product_id" required="1" context="{'default_type': 'product'}" attrs="{'readonly': ['|', ('state', '=', 'done'), ('move_id', '!=', False)]}"/>
+                      <field name="company_id" invisible="1"/>
+                      <field name="move_id" invisible="1"/>
+                      <field name="picking_id" invisible="1"/>
+                      <field name="product_uom_category_id" invisible="1"/>
+                      <field name="location_id" options="{'no_create': True}" attrs="{'column_invisible': [('parent.picking_type_code', '=', 'incoming')]}" groups="stock.group_stock_multi_locations" domain="[('id', 'child_of', parent.location_id), '|', ('company_id', '=', False), ('company_id', '=', company_id)]"/>
+                      <field name="location_dest_id" options="{'no_create': True}" attrs="{'column_invisible': [('parent.picking_type_code', '=', 'outgoing')]}" groups="stock.group_stock_multi_locations" domain="[('id', 'child_of', parent.location_dest_id), '|', ('company_id', '=', False), ('company_id', '=', company_id)]"/>
+                      <field name="package_id" groups="stock.group_tracking_lot"/>
+                      <field name="result_package_id" groups="stock.group_tracking_lot"/>
+                      <field name="lots_visible" invisible="1"/>
+                      <field name="owner_id" groups="stock.group_tracking_owner" attrs="{'column_invisible': [('parent.picking_type_code', '=', 'incoming')]}"/>
+                      <field name="state" invisible="1"/>
+                      <field name="lot_id" groups="stock.group_production_lot" attrs="{'column_invisible': [('parent.show_lots_text', '=', True)], 'invisible': [('lots_visible', '=', False)]}" context="{'default_product_id': product_id, 'default_company_id': company_id, 'active_picking_id': picking_id}" optional="show"/>
+                      <field name="lot_name" groups="stock.group_production_lot" attrs="{'column_invisible': [('parent.show_lots_text', '=', False)], 'invisible': [('lots_visible', '=', False)]}" context="{'default_product_id': product_id}"/>
+                      <field name="picking_type_use_existing_lots" invisible="1"/>
+                      <field name="expiration_date" force_save="1" attrs="{                     'column_invisible': [('parent.picking_type_code', '!=', 'incoming')],                     'readonly': [('picking_type_use_existing_lots', '=', True)],                 }"/>
+                      <field name="is_initial_demand_editable" invisible="1"/>
+                      <field name="product_uom_qty" readonly="1" attrs="{'column_invisible': ['|',('parent.immediate_transfer', '=', True),('parent.picking_type_code','=','incoming')]}" optional="show"/>
+                      <field name="is_locked" invisible="1"/>
+                      <field name="qty_done" attrs="{'readonly': [('state', 'in', ('done', 'cancel')), ('is_locked', '=', True)]}" force_save="1" options="{'barcode_events': True}" widget="field_float_scannable"/>
+                      <field name="product_uom_id" force_save="1" attrs="{'readonly': [('state', '!=', 'draft'), ('id', '!=', False)]}" groups="uom.group_uom"/>
+                      <field name="product_barcode" invisible="1"/>
+                      <field name="location_processed" invisible="1"/>
+                    </tree>
+                  </field>
+                  <field name="package_level_ids_details" context="{'default_location_id': location_id, 'default_location_dest_id': location_dest_id, 'default_company_id': company_id}" attrs="{'readonly': [('state', '=', 'done')], 'invisible': ['|', ('picking_type_entire_packs', '=', False), ('show_operations', '=', False)]}"/>
+                  <button class="oe_highlight" name="action_put_in_pack" type="object" string="Put in Pack" attrs="{'invisible': [('state', 'in', ('draft', 'done', 'cancel'))]}" groups="stock.group_tracking_lot" barcode_trigger="pack"/>
+                </page>
+                <!-- Reservation displayed -->
+                <page string="Detailed Operations" name="detailed_operations_shown" attrs="{'invisible': ['|', ('show_operations', '=', False), ('show_reserved', '=', False)]}">
+                  <field name="move_line_ids_without_package" attrs="{'readonly': ['|', '|', ('show_operations', '=', False), ('state', '=', 'cancel'), '&amp;', ('state', '=', 'done'), ('is_locked', '=', True)]}" context="{'tree_view_ref': 'stock.view_stock_move_line_detailed_operation_tree', 'default_picking_id': id, 'default_location_id': location_id, 'default_location_dest_id': location_dest_id, 'default_company_id': company_id}">
+                    <tree editable="bottom" decoration-muted="(state == 'done' and is_locked == True)" decoration-danger="qty_done&gt;product_uom_qty and state!='done' and parent.picking_type_code != 'incoming'" decoration-success="qty_done==product_uom_qty and state!='done' and not result_package_id">
+                      <field name="product_id" required="1" context="{'default_type': 'product'}" attrs="{'readonly': ['|', ('state', '=', 'done'), ('move_id', '!=', False)]}"/>
+                      <field name="company_id" invisible="1"/>
+                      <field name="move_id" invisible="1"/>
+                      <field name="picking_id" invisible="1"/>
+                      <field name="product_uom_category_id" invisible="1"/>
+                      <field name="location_id" options="{'no_create': True}" attrs="{'column_invisible': [('parent.picking_type_code', '=', 'incoming')]}" groups="stock.group_stock_multi_locations" domain="[('id', 'child_of', parent.location_id), '|', ('company_id', '=', False), ('company_id', '=', company_id)]"/>
+                      <field name="location_dest_id" options="{'no_create': True}" attrs="{'column_invisible': [('parent.picking_type_code', '=', 'outgoing')]}" groups="stock.group_stock_multi_locations" domain="[('id', 'child_of', parent.location_dest_id), '|', ('company_id', '=', False), ('company_id', '=', company_id)]"/>
+                      <field name="package_id" groups="stock.group_tracking_lot"/>
+                      <field name="result_package_id" groups="stock.group_tracking_lot"/>
+                      <field name="lots_visible" invisible="1"/>
+                      <field name="owner_id" groups="stock.group_tracking_owner" attrs="{'column_invisible': [('parent.picking_type_code', '=', 'incoming')]}"/>
+                      <field name="state" invisible="1"/>
+                      <field name="lot_id" groups="stock.group_production_lot" attrs="{'column_invisible': [('parent.show_lots_text', '=', True)], 'invisible': [('lots_visible', '=', False)]}" context="{'default_product_id': product_id, 'default_company_id': company_id, 'active_picking_id': picking_id}" optional="show"/>
+                      <field name="lot_name" groups="stock.group_production_lot" attrs="{'column_invisible': [('parent.show_lots_text', '=', False)], 'invisible': [('lots_visible', '=', False)]}" context="{'default_product_id': product_id}"/>
+                      <field name="picking_type_use_existing_lots" invisible="1"/>
+                      <field name="expiration_date" force_save="1" attrs="{                     'column_invisible': [('parent.picking_type_code', '!=', 'incoming')],                     'readonly': [('picking_type_use_existing_lots', '=', True)],                 }"/>
+                      <field name="is_initial_demand_editable" invisible="1"/>
+                      <field name="product_uom_qty" readonly="1" attrs="{'column_invisible': ['|',('parent.immediate_transfer', '=', True),('parent.picking_type_code','=','incoming')]}" optional="show"/>
+                      <field name="is_locked" invisible="1"/>
+                      <field name="qty_done" attrs="{'readonly': [('state', 'in', ('done', 'cancel')), ('is_locked', '=', True)]}" force_save="1" options="{'barcode_events': True}" widget="field_float_scannable"/>
+                      <field name="product_uom_id" force_save="1" attrs="{'readonly': [('state', '!=', 'draft'), ('id', '!=', False)]}" groups="uom.group_uom"/>
+                      <field name="product_barcode" invisible="1"/>
+                      <field name="location_processed" invisible="1"/>
+                    </tree>
+                  </field>
+                  <field name="package_level_ids_details" context="{'default_location_id': location_id, 'default_location_dest_id': location_dest_id, 'default_company_id': company_id}" attrs="{'readonly': [('state', '=', 'done')], 'invisible': ['|', ('picking_type_entire_packs', '=', False), ('show_operations', '=', False)]}"/>
+                  <button class="oe_highlight" name="action_put_in_pack" type="object" string="Put in Pack" attrs="{'invisible': [('state', 'in', ('draft', 'done', 'cancel'))]}" groups="stock.group_tracking_lot"/>
+                </page>
+                <page string="Operations" name="operations">
+                  <field name="move_ids_without_package" mode="tree,kanban" attrs="{'readonly': ['&amp;', ('state', '=', 'done'), ('is_locked', '=', True)]}" context="{'default_company_id': company_id, 'default_date': scheduled_date, 'default_date_deadline': date_deadline, 'picking_type_code': picking_type_code, 'default_picking_id': id, 'form_view_ref':'stock.view_move_form', 'address_in_id': partner_id, 'default_picking_type_id': picking_type_id, 'default_location_id': location_id, 'default_location_dest_id': location_dest_id}" string="opera" widget="one2many">
+                    <tree decoration-danger="not parent.immediate_transfer and state != 'done' and quantity_done &gt; reserved_availability and show_reserved_availability" decoration-muted="scrapped == True or state == 'cancel' or (state == 'done' and is_locked == True)" string="Stock Moves" editable="bottom">
+                      <field name="company_id" invisible="1"/>
+                      <field name="name" invisible="1"/>
+                      <field name="state" invisible="1" readonly="0"/>
+                      <field name="picking_type_id" invisible="1"/>
+                      <field name="location_id" invisible="1"/>
+                      <field name="location_dest_id" invisible="1"/>
+                      <field name="scrapped" invisible="1"/>
+                      <field name="picking_code" invisible="1"/>
+                      <field name="product_type" invisible="1"/>
+                      <field name="show_details_visible" invisible="1"/>
+                      <field name="show_reserved_availability" invisible="1"/>
+                      <field name="show_operations" invisible="1" readonly="1"/>
+                      <field name="additional" invisible="1"/>
+                      <field name="has_move_lines" invisible="1"/>
+                      <field name="is_locked" invisible="1"/>
+                      <field name="product_uom_category_id" invisible="1"/>
+                      <field name="has_tracking" invisible="1"/>
+                      <field name="display_assign_serial" invisible="1"/>
+                      <field name="product_id" required="1" context="{'default_type': 'product'}" attrs="{'readonly': ['|', '&amp;', ('state', '!=', 'draft'), ('additional', '=', False), ('has_move_lines', '=', True)]}"/>
+                      <field name="price_unit"/>
+                      <field name="x_studio_suma_total_ca" string="suma total ca" attrs="{}" invisible="1"/>
+                      <field name="description_picking" string="Description" optional="hide"/>
+                      <field name="date" optional="hide"/>
+                      <field name="date_deadline" optional="hide"/>
+                      <field name="is_initial_demand_editable" invisible="1"/>
+                      <field name="is_quantity_done_editable" invisible="1"/>
+                      <field name="product_uom_qty" string="Demand" attrs="{'column_invisible': [('parent.immediate_transfer', '=', True)], 'readonly': ['|', ('is_initial_demand_editable', '=', False), '&amp;', '&amp;', ('show_operations', '=', True), ('is_locked', '=', True), ('is_initial_demand_editable', '=', False)]}"/>
+                      <field name="reserved_availability" string="Reserved" attrs="{'column_invisible': (['|','|', ('parent.state','=', 'done'), ('parent.picking_type_code', 'in', ['incoming', 'outgoing']), ('parent.immediate_transfer', '=', True)])}"/>
+                      <field name="product_qty" invisible="1" readonly="1"/>
+                      <field name="forecast_expected_date" invisible="1"/>
+                      <field name="forecast_availability" string="Reserved" attrs="{'column_invisible': ['|', ('parent.picking_type_code', '!=', 'outgoing'), ('parent.state','=', 'done')]}" widget="forecast_widget"/>
+                      <field name="quantity_done" string="Done" attrs="{'readonly': [('is_quantity_done_editable', '=', False)]}"/>
+                      <field name="x_studio_tipo" string="Tipo"/>
+                      <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft'), ('id', '!=', False)]}" options="{'no_open': True, 'no_create': True}" string="Unit of Measure" groups="uom.group_uom"/>
+                      <field name="x_studio_cargue_r" string="cargue R"/>
+                      <field name="lot_ids" widget="many2many_tags" groups="stock.group_production_lot" attrs="{'invisible': ['|', ('show_details_visible', '=', False), ('has_tracking', '!=', 'serial')]}" optional="hide" options="{'create': [('parent.use_create_lots', '=', True)]}" context="{'default_company_id': company_id, 'default_product_id': product_id, 'active_picking_id': parent.id}" domain="[('product_id','=',product_id)]"/>
+                      <button name="action_show_details" type="object" icon="fa-list" width="0.1" attrs="{'invisible': [('show_details_visible', '=', False)]}" options="{&quot;warn&quot;: true}"/>
+                      <button name="action_assign_serial" type="object" icon="fa-plus-square" width="0.1" role="img" title="Assign Serial Numbers" attrs="{'invisible': ['|', ('display_assign_serial', '=', False), ('show_operations', '=', False)]}"/>
+                    </tree>
+                    <form string="Stock Moves">
+                      <header>
+                        <field name="state" widget="statusbar"/>
+                      </header>
+                      <group name="studio_group_140b95">
+                        <field name="product_uom_category_id" invisible="1"/>
+                        <field name="additional" invisible="1"/>
+                        <field name="has_move_lines" invisible="1"/>
+                        <field name="company_id" invisible="1"/>
+                        <field name="product_id" required="1" attrs="{'readonly': ['|', '&amp;', ('state', '!=', 'draft'), ('additional', '=', False), ('has_move_lines', '=', True)]}"/>
+                        <field name="is_initial_demand_editable" invisible="1"/>
+                        <field name="is_quantity_done_editable" invisible="1"/>
+                        <field name="product_uom_qty" attrs="{'invisible': [('parent.immediate_transfer', '=', True)], 'readonly': [('is_initial_demand_editable', '=', False)]}"/>
+                        <field name="reserved_availability" string="Reserved" attrs="{'invisible': (['|','|', ('parent.state','=', 'done'), ('parent.picking_type_code', 'in', ['outgoing', 'incoming']), ('parent.immediate_transfer', '=', True)])}"/>
+                        <field name="product_qty" invisible="1" readonly="1"/>
+                        <field name="forecast_expected_date" invisible="1"/>
+                        <field name="x_studio_float_field_Ivgpy"/>
+                        <field name="forecast_availability" string="Reserved" attrs="{'invisible': ['|', ('parent.picking_type_code', '!=', 'outgoing'), ('parent.state','=', 'done')]}" widget="forecast_widget"/>
+                        <field name="quantity_done" string="Done" attrs="{'readonly': [('is_quantity_done_editable', '=', False)]}"/>
+                        <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft'), ('id', '!=', False)]}" options="{'no_open': True, 'no_create': True}" string="Unit of Measure" groups="uom.group_uom"/>
+                        <field name="description_picking" string="Description"/>
+                      </group>
+                    </form>
+                  </field>
+                  <field name="id" invisible="1"/>
+                  <field name="package_level_ids" context="{'default_location_id': location_id, 'default_location_dest_id': location_dest_id, 'default_company_id': company_id}" attrs="{'readonly': [('state', '=', 'done')], 'invisible': ['|', ('picking_type_entire_packs', '=', False), ('show_operations', '=', True)]}"/>
+                  <button class="oe_highlight" name="action_put_in_pack" type="object" string="Put in Pack" attrs="{'invisible': [('state', 'in', ('draft', 'done', 'cancel'))]}" groups="stock.group_tracking_lot"/>
+                </page>
+                <page string="Additional Info" name="extra">
+                  <group name="studio_group_e05738">
+                    <group name="carrier_data" string="Shipping Information">
+                      <field name="x_studio_cargue_remi" string="cargue remi"/>
+                      <field name="is_return_picking" invisible="1"/>
+                      <field name="carrier_id" attrs="{'readonly': [('state', 'in', ('done', 'cancel'))]}" options="{'no_create': True, 'no_open': True}"/>
+                      <field name="delivery_packaging_ids" invisible="1"/>
+                      <field name="delivery_type" attrs="{'invisible':True}"/>
+                      <label for="carrier_tracking_ref"/>
+                      <div name="tracking">
+                        <field name="carrier_tracking_ref" class="oe_inline" attrs="{'readonly': [('state', 'in', ('done', 'cancel'))]}"/>
+                        <button type="object" class="fa fa-arrow-right oe_link" name="cancel_shipment" string="Cancel" attrs="{'invisible':['|','|','|',('carrier_tracking_ref','=',False),('delivery_type','in', ['fixed', 'base_on_rule']),('delivery_type','=',False),('state','not in',('done'))]}"/>
+                      </div>
+                      <label for="weight" string="Weight"/>
+                      <div name="studio_div_3b5a7a">
+                        <field name="weight" class="oe_inline"/>
+                        <field name="weight_uom_name" nolabel="1" class="oe_inline" style="margin-left:5px"/>
+                      </div>
+                      <label for="shipping_weight" string="Weight for shipping"/>
+                      <div name="studio_div_82cd30">
+                        <field name="shipping_weight" class="oe_inline"/>
+                        <field name="weight_uom_name" nolabel="1" class="oe_inline" style="margin-left:5px"/>
+                      </div>
+                    </group>
+                    <group string="Other Information" name="other_infos">
+                      <field name="picking_type_code" invisible="1"/>
+                      <field name="move_type" attrs="{'invisible': [('picking_type_code', '=', 'incoming')]}"/>
+                      <field name="user_id" domain="[('share', '=', False)]"/>
+                      <field name="group_id" groups="base.group_no_one"/>
+                      <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}" force_save="1"/>
+                    </group>
+                  </group>
+                </page>
+                <page string="Note" name="note">
+                  <field name="note" string="Note" placeholder="Add an internal note that will be printed on the Picking Operations sheet"/>
+                </page>
+              </notebook>
+            </sheet>
+            <field name="_barcode_scanned" widget="picking_barcode_handler"/>
+          </form>
+          <tree string="Picking list" multi_edit="1" sample="1">
+            <header>
+              <button name="do_unreserve" type="object" string="Unreserve"/>
+            </header>
+            <field name="company_id" groups="base.group_multi_company" optional="show"/>
+            <field name="id" string="Documento"/>
+            <field name="priority" optional="show" widget="priority" nolabel="1" attrs="{}" invisible="1"/>
+            <field name="name" string="Remision" filter_domain="['|', ('id', 'ilike', self), ('origin', 'ilike', self)]"/>
+            <field name="partner_id" optional="show" string="Tercero"/>
+            <field name="date" string="Fecha"/>
+            <field name="x_studio_total_monetary_gf" sum="Sum of Total"/>
+            <field name="signature" string="Signed" optional="hide" groups="stock.group_stock_sign_delivery"/>
+            <field name="user_id" optional="hide" widget="many2one_avatar_user"/>
+            <field name="date_deadline" optional="hide" widget="remaining_days" attrs="{'invisible':[('state', 'in', ('done', 'cancel'))]}"/>
+            <field name="group_id" invisible="1"/>
+            <field name="backorder_id" optional="hide"/>
+            <field name="carrier_tracking_ref" optional="hide"/>
+            <field name="carrier_id" optional="hide"/>
+            <field name="weight" optional="hide"/>
+            <field name="shipping_weight" optional="hide"/>
+            <field name="picking_type_id" optional="hide"/>
+            <field name="state" optional="show" widget="badge" decoration-success="state == 'done'" decoration-info="state not in ('done', 'cancel')" attrs="{}" invisible="1"/>
+            <field name="x_studio_many2one_field_Ywuo0" attrs="{}" invisible="1"/>
+            <field name="activity_exception_decoration" widget="activity_exception"/>
+            <field name="json_popover" nolabel="1" widget="stock_rescheduling_popover" attrs="{'invisible': [('json_popover', '=', False)]}"/>
+          </tree>
+        </field>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- vista de lista default de stockinventory.line -->
+
+
+        <?xml version="1.0"?>
+<tree default_order="location_id,product_id" editable="top" string="Inventory Details" js_class="inventory_validate_button" decoration-danger="product_qty != theoretical_qty" decoration-muted="product_qty == theoretical_qty" decoration-bf="is_editable">
+                <field name="company_id" invisible="1" readonly="1"/>
+                <field name="product_tracking" invisible="1"/>
+                <field name="is_editable" invisible="1"/>
+                <field name="outdated" invisible="1"/>
+                <field name="product_id" width="1.6" readonly="context.get('default_product_id', False)" attrs="{'readonly': ['|',                             ('is_editable', '=', False),                             ('state', '!=', 'confirm')]}"/>
+                <field name="location_id" groups="stock.group_stock_multi_locations" options="{'no_create': True}" invisible="context.get('readonly_location_id', False)" readonly="context.get('readonly_location_id', False)" attrs="{'readonly': ['|',                             ('is_editable', '=', False),                             ('state', '!=', 'confirm')]}" />
+                <field name="inventory_date" optional="hide" width="0.8"/> 
+                <field name="prod_lot_id" groups="stock.group_production_lot" width="0.8" attrs="{'readonly': ['|', '|',                             ('product_tracking', '=', 'none'),                             ('is_editable', '=', False),                             ('state', '!=', 'confirm')]}" context="{'default_product_id': product_id, 'default_company_id': company_id}" optional="show"/>
+                <field name="package_id" groups="stock.group_tracking_lot" width="0.8" attrs="{'readonly': ['|',                             ('is_editable', '=', False),                             ('state', '!=', 'confirm')]}" string="Package" optional="show"/>
+                <field name="partner_id" groups="stock.group_tracking_owner" attrs="{'readonly': ['|',                             ('is_editable', '=', False),                             ('state', '!=', 'confirm')]}"/>
+                <field name="theoretical_qty" string="On Hand" width="0.5" force_save="1" optional="show" sum="On Hand"/>
+                <button name="action_refresh_quantity" title="Refresh quantity" icon="fa-refresh" type="object" attrs="{'invisible': [('outdated', '=', False)]}"/>
+                <field name="product_qty" width="0.5" string="Counted"/>
+                <field name="difference_qty" optional="show" width="0.5"/>
+                <field name="product_uom_id" string="UoM" groups="uom.group_uom" width="0.3" force_save="1"/>
+                <field name="inventory_id" invisible="1"/>
+                <field name="state" invisible="1"/>
+            </tree>
